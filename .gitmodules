@@ -1,0 +1,3 @@
+[submodule "tutorial_tensorflowfederated"]
+	path = tutorial_tensorflowfederated
+	url = git@github.com:ywcb00/tutorial_tensorflowfederated.git
