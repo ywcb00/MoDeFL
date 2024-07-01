@@ -1,3 +1,6 @@
-[submodule "tutorial_tensorflowfederated"]
-	path = tutorial_tensorflowfederated
-	url = git@github.com:ywcb00/tutorial_tensorflowfederated.git
+[submodule "tffdataset"]
+	path = tffdataset
+	url = git@github.com:ywcb00/tffdataset.git
+[submodule "tffmodel"]
+	path = tffmodel
+	url = git@github.com:ywcb00/tffmodel.git
