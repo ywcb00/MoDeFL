@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+import "network/protos/ModelUpdate.proto";
+
+service Initialize {
+    rpc InitDataset(Dataset) returns (Ack) {};
+    rpc InitModel(Model) returns (Ack) {};
+    rpc InitModelWeights(ModelWeights) returns (Ack) {};
+    rpc InitLearningStrategy(LearningStrategy) returns (Ack) {};
+    rpc StartLearning(Ack) returns (Ack) {};
+};
+
+message Dataset {
+    int32 dataset_id = 1; // enum id
+    int32 partition_scheme_id = 2; // enum id
+    int32 partition_seed = 3;
+};
+
+message Model {
+    bytes model = 1; // serialized model
+};
+
+message LearningStrategy {
+    int32 learning_type_id = 1;
+}

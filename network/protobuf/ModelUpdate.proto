@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+service ModelUpdate {
+    rpc TransferModelUpdate(ModelWeights) returns (Ack) {}
+};
+
+message ModelWeights {
+    repeated bytes layer_weights = 1;
+    string ip_and_port = 2;
+};
+
+message Ack {
+    // empty message for ack purpose
+};
+
