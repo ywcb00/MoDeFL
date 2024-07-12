@@ -13,13 +13,7 @@ import sys
 config = {
     "seed": 13,
 
-    "force_load": False,
-
     "dataset_id": DatasetID.Mnist,
-
-    "train_response_path": "./data/train_response.csv",
-    "val_response_path": "./data/val_response.csv",
-    "test_response_path": "./data/test_response.csv",
 
     "part_scheme": PartitioningScheme.ROUND_ROBIN,
     "num_workers": 4,
@@ -38,7 +32,7 @@ class ExecType(Enum):
 
 def printHelp(program_name):
     print("Initiator usage:", program_name, "--initiate")
-    print("Actor usage:", program_name, "--act", "[--forceload]")
+    print("Actor usage:", program_name, "--act")
 
 def main(argv):
     logging.basicConfig()
@@ -48,7 +42,7 @@ def main(argv):
     exec_type = None
 
     try:
-        opts, args = getopt.getopt(argv[1:], "hlia", ["help", "forceload", "initiate", "act"])
+        opts, args = getopt.getopt(argv[1:], "hia", ["help", "initiate", "act"])
     except getopt.GetoptError:
         print("Wrong usage.")
         printHelp(argv[0])
@@ -57,8 +51,6 @@ def main(argv):
         if opt in ("-h", "--help"):
             printHelp(argv[0])
             sys.exit()
-        if opt in ("-l", "--forceload"):
-            config["force_load"] = True
         if opt in ("-i", "--initiate"):
             exec_type = ExecType.INITIATOR
         elif opt in ("-a", "--act"):

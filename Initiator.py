@@ -1,4 +1,5 @@
 
+from model.SerializationUtils import SerializationUtils
 import network.protos.Initialization_pb2 as Initialization_pb2
 import network.protos.Initialization_pb2_grpc as Initialization_pb2_grpc
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
@@ -25,7 +26,7 @@ class Initiator:
 
             init_weights = KerasModel.createKerasModelElementSpec(
                 getDatasetElementSpec(self.config), self.config).get_weights()
-            init_weights_serialized = [layer_weights.tobytes() for layer_weights in init_weights]
+            init_weights_serialized = SerializationUtils.serializeModelWeights(init_weights)
             stub.InitModelWeights(ModelUpdate_pb2.ModelWeights(
                 layer_weights=init_weights_serialized, ip_and_port="initialization"))
 

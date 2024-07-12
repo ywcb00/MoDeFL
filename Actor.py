@@ -1,12 +1,12 @@
 
 from model.LearningStrategy import LearningType
+from model.SerializationUtils import SerializationUtils
 from network.InitializationService import InitializationService
 from tffdataset.DatasetUtils import DatasetID, getDataset
 from tffdataset.FedDataset import FedDataset, PartitioningScheme
 from tffmodel.KerasModel import KerasModel
 
 import logging
-import numpy as np
 
 class Actor:
     def __init__(self, config):
@@ -37,10 +37,8 @@ class Actor:
 
         def initializeModelWeightsCallback(weights_serialized):
             # deserialize and reshape the retrieved weights
-            source_weights = self.model.getWeights()
-            init_weights = [np.frombuffer(layer_weights, dtype=source_weights[idx].dtype.name)
-                .reshape(source_weights[idx].shape)
-                for idx, layer_weights in enumerate(weights_serialized)]
+            init_weights = SerializationUtils.deserializeModelWeights(
+                weights_serialized, self.model.getWeights())
             self.model.setWeights(init_weights)
             self.logger.debug("Initialized the model weights.")
 
