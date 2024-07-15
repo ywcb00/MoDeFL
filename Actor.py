@@ -46,10 +46,15 @@ class Actor:
             self.config["learning_type"] = LearningType(learning_type_id)
             self.logger.debug(f'Using learning strategy {self.config["learning_type"].name}')
 
+        def registerNeighbors(neighbors_ip_and_port):
+            self.config["neighbors"] = neighbors_ip_and_port
+            self.logger.debug(f'Registered {len(self.config["neighbors"])} neighbors')
+
         callbacks = {"InitDataset": initializeDatasetCallback,
             "InitModel": initializeModelCallback,
             "InitModelWeights": initializeModelWeightsCallback,
-            "InitLearningStrategy": initializeLearningStrategyCallback}
+            "InitLearningStrategy": initializeLearningStrategyCallback,
+            "RegisterNeighbors": registerNeighbors}
 
         init_service = InitializationService(self.config)
         init_service.waitForInitialization(callbacks)

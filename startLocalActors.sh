@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-ADDR_FILE=${1:-"actor_addresses.txt"}
+ADDR_FILE=${1:-"resources/actor_addresses.txt"}
 
 actor_pid=() # empty array
 trap 'echo "Killing local actors."; for apid in ${actor_pid[*]}; do pkill -P ${apid}; done' SIGINT

@@ -39,6 +39,15 @@ class Initiator:
         self.logger.debug(f'Initialized {addr}')
         return
 
+    async def registerNeighbors(self, addr, addresses):
+        addresses = [a for a in addresses if a != addr] # TODO: read and use custom adjacency matrix
+        self.logger.debug(f'Connecting to {addr}')
+        async with grpc.aio.insecure_channel(addr) as channel:
+            stub = Initialization_pb2_grpc.InitializeStub(channel)
+            await stub.RegisterNeighbors(Initialization_pb2.NeighborSpec(ip_and_port=addresses))
+        self.logger.debug(f'Registered neighbors of {addr}')
+        return
+
     async def startActorLearning(self, addr):
         self.logger.debug(f'Connecting to {addr}')
         async with grpc.aio.insecure_channel(addr) as channel:
@@ -50,23 +59,23 @@ class Initiator:
                 pass
         self.logger.debug(f'Started learning on {addr}')
 
-    async def initialize(self):
-        address_file = open(self.config["address_file"])
+    async def initialize(self, addresses):
         tasks = []
-        for addr in address_file:
+        for addr in addresses:
             tasks.append(asyncio.create_task(self.initializeActor(addr)))
+            tasks.append(asyncio.create_task(self.registerNeighbors(addr, addresses)))
         for t in tasks:
             await t
 
-    async def startLearning(self):
-        address_file = open(self.config["address_file"])
+    async def startLearning(self, addresses):
         tasks = []
-        for addr in address_file:
+        for addr in addresses:
             tasks.append(asyncio.create_task(self.startActorLearning(addr)))
         for t in tasks:
             await t
 
     def initiate(self):
-        asyncio.run(self.initialize())
-        asyncio.run(self.startLearning())
+        actor_addresses = [addr.strip() for addr in open(self.config["address_file"])]
+        asyncio.run(self.initialize(actor_addresses))
+        asyncio.run(self.startLearning(actor_addresses))
         self.logger.info("Initiation completed.")

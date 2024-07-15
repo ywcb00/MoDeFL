@@ -7,6 +7,7 @@ service Initialize {
     rpc InitModel(Model) returns (Ack) {};
     rpc InitModelWeights(ModelWeights) returns (Ack) {};
     rpc InitLearningStrategy(LearningStrategy) returns (Ack) {};
+    rpc RegisterNeighbors(NeighborSpec) returns (Ack) {};
     rpc StartLearning(Ack) returns (Ack) {};
 };
 
@@ -22,4 +23,8 @@ message Model {
 
 message LearningStrategy {
     int32 learning_type_id = 1;
+}
+
+message NeighborSpec {
+    repeated string ip_and_port = 1;
 }

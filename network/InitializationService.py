@@ -28,6 +28,10 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
         self.callbacks["InitLearningStrategy"](request.learning_type_id)
         return ModelUpdate_pb2.Ack()
 
+    def RegisterNeighbors(self, request, context):
+        self.callbacks["RegisterNeighbors"](request.ip_and_port)
+        return ModelUpdate_pb2.Ack()
+
     def StartLearning(self, request, context):
         self.callbacks["StartLearning"]()
         return ModelUpdate_pb2.Ack()

@@ -19,7 +19,7 @@ config = {
     "num_workers": 4,
 
     "port": 50051,
-    "address_file": "./actor_addresses.txt",
+    "address_file": "./resources/actor_addresses.txt",
 
     "learning_type": LearningType.DFLv1,
 
