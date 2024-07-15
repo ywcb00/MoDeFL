@@ -13,7 +13,7 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
 
     def InitDataset(self, request, context):
         self.callbacks["InitDataset"](request.dataset_id,
-            request.partition_scheme_id, request.partition_seed)
+            request.partition_scheme_id, request.partition_index, request.seed)
         return ModelUpdate_pb2.Ack()
 
     def InitModel(self, request, context):

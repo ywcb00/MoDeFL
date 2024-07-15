@@ -8,9 +8,12 @@ from tffmodel.KerasModel import KerasModel
 
 import asyncio
 import grpc
+import itertools
 import logging
 
 class Initiator:
+    actor_idx = itertools.count()
+
     def __init__(self, config):
         self.config = config
         self.logger = logging.getLogger("Initiator")
@@ -24,7 +27,8 @@ class Initiator:
             await stub.InitDataset(Initialization_pb2.Dataset(
                 dataset_id=self.config["dataset_id"].value,
                 partition_scheme_id=self.config["part_scheme"].value,
-                partition_seed=self.config["seed"]))
+                partition_index=next(self.actor_idx),
+                seed=self.config["seed"]))
 
             await stub.InitModel(Initialization_pb2.Model(model=None))
 

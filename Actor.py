@@ -3,6 +3,7 @@ from model.LearningStrategy import LearningType
 from model.SerializationUtils import SerializationUtils
 from network.InitializationService import InitializationService
 from tffdataset.DatasetUtils import DatasetID, getDataset
+from tffdataset.DirectDataset import DirectDataset
 from tffdataset.FedDataset import FedDataset, PartitioningScheme
 from tffmodel.KerasModel import KerasModel
 
@@ -15,19 +16,29 @@ class Actor:
         self.logger.setLevel(config["log_level"])
 
     def initialize(self):
-        def initializeDatasetCallback(dataset_id, part_scheme_id, part_seed):
+        def initializeDatasetCallback(dataset_id, part_scheme_id, part_index, seed):
             self.config["dataset_id"] = DatasetID(dataset_id)
             self.config["part_scheme"] = PartitioningScheme(part_scheme_id)
-            self.config["seed"] = part_seed
+            self.config["part_index"] = part_index
+            self.config["seed"] = seed
 
             self.dataset = getDataset(self.config)
             self.dataset.load()
 
+            # TODO: distinguish between loading an entire dataset and partitioning it
+            #       or directly loading a single partition
             self.fed_dataset = FedDataset(self.config)
             self.fed_dataset.construct(self.dataset)
             self.fed_dataset.batch()
 
-            self.logger.debug(f'Using dataset {self.config["dataset_id"].name}.')
+            self.dataset = DirectDataset(self.dataset.batch_size, self.dataset.element_spec,
+                self.fed_dataset.train[self.config["part_index"]],
+                self.fed_dataset.val[self.config["part_index"]],
+                self.fed_dataset.test[self.config["part_index"]],
+                self.config)
+
+            self.logger.debug(f'Using partition {self.config["part_index"]} of '
+                + f'dataset {self.config["dataset_id"].name}.')
 
         def initializeModelCallback(serialized_model):
             # TODO: support arbitrary serialized models from the initiator
