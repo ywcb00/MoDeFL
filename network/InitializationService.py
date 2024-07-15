@@ -34,11 +34,12 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
 
 class InitializationService:
     def __init__(self, config):
+        self.config = config
         self.logger = logging.getLogger("network/InitializationService")
         self.logger.setLevel(config["log_level"])
 
     def waitForInitialization(self, callbacks):
-        port = "50051" # TODO: use a random free port and store ip+port somewhere
+        port = self.config["port"]
         num_threads = 4 # TODO: define the maximal number of thread w.r.t. the CPU
 
         self.server = None

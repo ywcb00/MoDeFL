@@ -1,5 +1,6 @@
 install
 run
+runPy
 uninstall
 data/
 log/

@@ -18,6 +18,9 @@ config = {
     "part_scheme": PartitioningScheme.ROUND_ROBIN,
     "num_workers": 4,
 
+    "port": 50051,
+    "address_file": "./actor_addresses.txt",
+
     "learning_type": LearningType.DFLv1,
 
     "num_train_rounds": 10,
@@ -31,8 +34,8 @@ class ExecType(Enum):
     ACTOR = 2
 
 def printHelp(program_name):
-    print("Initiator usage:", program_name, "--initiate")
-    print("Actor usage:", program_name, "--act")
+    print("Initiator usage:", program_name, "--initiate", "[--addr_file=<PATH>]")
+    print("Actor usage:", program_name, "--act", "--port=<PORT>")
 
 def main(argv):
     logging.basicConfig()
@@ -42,7 +45,7 @@ def main(argv):
     exec_type = None
 
     try:
-        opts, args = getopt.getopt(argv[1:], "hia", ["help", "initiate", "act"])
+        opts, args = getopt.getopt(argv[1:], "hiap:", ["help", "initiate", "act", "port=", "addr_file="])
     except getopt.GetoptError:
         print("Wrong usage.")
         printHelp(argv[0])
@@ -55,6 +58,10 @@ def main(argv):
             exec_type = ExecType.INITIATOR
         elif opt in ("-a", "--act"):
             exec_type = ExecType.ACTOR
+        elif opt in("-p", "--port"):
+            config["port"] = arg
+        elif opt in ("--addr_file"):
+            config["address_file"] = arg
 
     match exec_type:
         case ExecType.INITIATOR:
@@ -66,6 +73,7 @@ def main(argv):
             logger.info("Starting Actor")
             actor = Actor(config)
             actor.initialize()
+            sys.exit()
         case _:
             print("Wrong usage.")
             printHelp(argv[0])
