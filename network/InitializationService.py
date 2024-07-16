@@ -56,4 +56,4 @@ class InitializationService:
         self.server.start()
         self.logger.info(f'Server started, listening on {port}.')
         self.server.wait_for_termination()
-        self.logger.info(f'Server terminated.')
+        self.logger.info('Server terminated.')

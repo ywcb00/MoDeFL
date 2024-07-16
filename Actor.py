@@ -1,4 +1,4 @@
-
+from model.DFLv1Model import DFLv1Model
 from model.LearningStrategy import LearningType
 from model.SerializationUtils import SerializationUtils
 from network.InitializationService import InitializationService
@@ -42,22 +42,22 @@ class Actor:
 
         def initializeModelCallback(serialized_model):
             # TODO: support arbitrary serialized models from the initiator
-            self.model = KerasModel(self.config)
-            self.model.initModel(self.fed_dataset.train[0])
+            self.keras_model = KerasModel(self.config)
+            self.keras_model.initModel(self.fed_dataset.train[0])
             self.logger.debug("Initialized the model.")
 
         def initializeModelWeightsCallback(weights_serialized):
             # deserialize and reshape the retrieved weights
             init_weights = SerializationUtils.deserializeModelWeights(
-                weights_serialized, self.model.getWeights())
-            self.model.setWeights(init_weights)
+                weights_serialized, self.keras_model.getWeights())
+            self.keras_model.setWeights(init_weights)
             self.logger.debug("Initialized the model weights.")
 
         def initializeLearningStrategyCallback(learning_type_id):
             self.config["learning_type"] = LearningType(learning_type_id)
             self.logger.debug(f'Using learning strategy {self.config["learning_type"].name}')
 
-        def registerNeighbors(neighbors_ip_and_port):
+        def registerNeighborsCallback(neighbors_ip_and_port):
             self.config["neighbors"] = neighbors_ip_and_port
             self.logger.debug(f'Registered {len(self.config["neighbors"])} neighbors')
 
@@ -65,9 +65,13 @@ class Actor:
             "InitModel": initializeModelCallback,
             "InitModelWeights": initializeModelWeightsCallback,
             "InitLearningStrategy": initializeLearningStrategyCallback,
-            "RegisterNeighbors": registerNeighbors}
+            "RegisterNeighbors": registerNeighborsCallback}
 
         init_service = InitializationService(self.config)
         init_service.waitForInitialization(callbacks)
 
         self.logger.info("Starting with the learning procedure")
+
+        self.model = DFLv1Model(self.config, self.keras_model)
+        self.model.startServer()
+        self.model.fitLocal(self.dataset)
