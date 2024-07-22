@@ -1,4 +1,4 @@
-from model.DFLv1Model import DFLv1Model
+from model.DFLv1Strategy import DFLv1Strategy
 from model.LearningStrategy import LearningType
 from model.SerializationUtils import SerializationUtils
 from network.InitializationService import InitializationService
@@ -78,5 +78,5 @@ class Actor:
 
         self.logger.info("Starting with the learning procedure")
 
-        self.model = DFLv1Model(self.config, self.keras_model)
+        self.model = DFLv1Strategy(self.config, self.keras_model)
         self.model.performTraining(self.dataset)

@@ -2,7 +2,7 @@ from model.ModelUpdateMarket import ModelUpdateMarket
 
 from abc import ABC, abstractmethod
 
-class IDFLModel(ABC):
+class IDFLStrategy(ABC):
     def __init__(self, config, keras_model):
         self.config = config
         self.keras_model = keras_model

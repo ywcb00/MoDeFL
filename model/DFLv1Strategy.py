@@ -1,4 +1,4 @@
-from model.IDFLModel import IDFLModel
+from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
@@ -9,11 +9,10 @@ import asyncio
 import grpc
 import logging
 
-# TODO: rename to DFLv1Strategy
-class DFLv1Model(IDFLModel):
+class DFLv1Strategy(IDFLStrategy):
     def __init__(self, config, keras_model):
         super().__init__(config, keras_model)
-        self.logger = logging.getLogger("model/DFLv1Model")
+        self.logger = logging.getLogger("model/DFLv1Strategy")
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
