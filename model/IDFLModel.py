@@ -1,13 +1,12 @@
+from model.ModelUpdateMarket import ModelUpdateMarket
+
 from abc import ABC, abstractmethod
-from queue import Queue
 
 class IDFLModel(ABC):
     def __init__(self, config, keras_model):
         self.config = config
         self.keras_model = keras_model
-        # TODO: create a separate data structure for storing model updates with wait/notify functionality
-        self.model_updates = dict(
-            [(addr, Queue()) for addr in config["neighbors"]])
+        self.model_update_market = ModelUpdateMarket(self.config)
 
     def startServer(self):
         pass
@@ -16,6 +15,9 @@ class IDFLModel(ABC):
         pass
 
     def fitLocal(self):
+        pass
+
+    def broadcast(self):
         pass
 
     def aggregate(self):

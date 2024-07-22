@@ -24,6 +24,8 @@ class Initiator:
         async with grpc.aio.insecure_channel(addr) as channel:
             stub = Initialization_pb2_grpc.InitializeStub(channel)
 
+            await stub.InitIdentity(Initialization_pb2.Identity(ip_and_port=addr))
+
             await stub.InitDataset(Initialization_pb2.Dataset(
                 dataset_id=self.config["dataset_id"].value,
                 partition_scheme_id=self.config["part_scheme"].value,

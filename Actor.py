@@ -16,6 +16,11 @@ class Actor:
         self.logger.setLevel(config["log_level"])
 
     def initialize(self):
+        def initializeIdentityCallback(addr):
+            self.config["address"] = addr
+
+            self.logger.debug(f'Initialized own identity as {addr}.')
+
         def initializeDatasetCallback(dataset_id, part_scheme_id, part_index, seed):
             self.config["dataset_id"] = DatasetID(dataset_id)
             self.config["part_scheme"] = PartitioningScheme(part_scheme_id)
@@ -61,7 +66,8 @@ class Actor:
             self.config["neighbors"] = neighbors_ip_and_port
             self.logger.debug(f'Registered {len(self.config["neighbors"])} neighbors')
 
-        callbacks = {"InitDataset": initializeDatasetCallback,
+        callbacks = {"InitIdentity": initializeIdentityCallback,
+            "InitDataset": initializeDatasetCallback,
             "InitModel": initializeModelCallback,
             "InitModelWeights": initializeModelWeightsCallback,
             "InitLearningStrategy": initializeLearningStrategyCallback,
@@ -73,5 +79,4 @@ class Actor:
         self.logger.info("Starting with the learning procedure")
 
         self.model = DFLv1Model(self.config, self.keras_model)
-        self.model.startServer()
-        self.model.fitLocal(self.dataset)
+        self.model.performTraining(self.dataset)

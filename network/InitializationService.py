@@ -11,6 +11,10 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
     def __init__(self, callbacks):
         self.callbacks = callbacks
 
+    def InitIdentity(self, request, context):
+        self.callbacks["InitIdentity"](request.ip_and_port)
+        return ModelUpdate_pb2.Ack()
+
     def InitDataset(self, request, context):
         self.callbacks["InitDataset"](request.dataset_id,
             request.partition_scheme_id, request.partition_index, request.seed)

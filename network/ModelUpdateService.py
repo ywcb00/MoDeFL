@@ -2,7 +2,6 @@
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 import network.protos.ModelUpdate_pb2_grpc as ModelUpdate_pb2_grpc
 
-import asyncio
 from concurrent import futures
 import grpc
 import logging
@@ -12,7 +11,7 @@ class Servicer(ModelUpdate_pb2_grpc.ModelUpdateServicer):
         self.callbacks = callbacks
 
     def TransferModelUpdate(self, request, context):
-        self.callback["TransferModelUpdate"](request.layer_weights,
+        self.callbacks["TransferModelUpdate"](request.layer_weights,
             request.ip_and_port)
         return ModelUpdate_pb2.Ack()
 

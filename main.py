@@ -23,7 +23,7 @@ config = {
 
     "learning_type": LearningType.DFLv1,
 
-    "num_train_rounds": 10,
+    "num_train_rounds": 1, # FIXME: this number corresponds to the local training rounds at the moment
 
     "log_dir": "./log/training",
     "log_level": logging.DEBUG,
