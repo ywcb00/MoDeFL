@@ -6,14 +6,17 @@ from tffdataset.DatasetUtils import DatasetID, getDataset
 from tffdataset.DirectDataset import DirectDataset
 from tffdataset.FedDataset import FedDataset, PartitioningScheme
 from tffmodel.KerasModel import KerasModel
+from tffmodel.ModelBuilderUtils import getFedLearningRates
 
 import logging
+import tensorflow as tf
 
 class Actor:
     def __init__(self, config):
         self.config = config
         self.logger = logging.getLogger("Actor")
         self.logger.setLevel(config["log_level"])
+        self.config["log_dir"] = f'{self.config["log_dir"]}/{self.config["port"]}'
 
     def initialize(self):
         def initializeIdentityCallback(addr):
@@ -48,7 +51,10 @@ class Actor:
         def initializeModelCallback(serialized_model):
             # TODO: support arbitrary serialized models from the initiator
             self.keras_model = KerasModel(self.config)
-            self.keras_model.initModel(self.fed_dataset.train[0])
+            _, local_lr = getFedLearningRates(self.config)
+            local_optimizer = tf.keras.optimizers.SGD(learning_rate=local_lr)
+            self.keras_model.initModelWithOptimizer(self.fed_dataset.train[0],
+                optimizer=local_optimizer)
             self.logger.debug("Initialized the model.")
 
         def initializeModelWeightsCallback(weights_serialized):
