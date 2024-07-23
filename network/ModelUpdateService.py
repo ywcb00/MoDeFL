@@ -15,6 +15,12 @@ class Servicer(ModelUpdate_pb2_grpc.ModelUpdateServicer):
             request.ip_and_port)
         return ModelUpdate_pb2.Ack()
 
+    def EvaluateModel(self, request, context):
+        eval_metrics = self.callbacks["EvaluateModel"](request.layer_weights)
+        return ModelUpdate_pb2.EvaluationMetrics(
+            metrics=[ModelUpdate_pb2.Metric(key=key, value=val)
+                for key, val in eval_metrics.items()])
+
 class ModelUpdateService:
     def __init__(self, config):
         self.config = config
@@ -33,6 +39,6 @@ class ModelUpdateService:
         self.logger.info(f'Server started, listening on {port}.')
 
     def stopServer(self):
-        self.server.stop(None)
+        self.server.stop(grace=5)
         self.server.wait_for_termination()
         self.logger.info('Server terminated.')

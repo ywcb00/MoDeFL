@@ -84,5 +84,5 @@ class Actor:
 
         self.logger.info("Starting with the learning procedure")
 
-        self.model = DFLv1Strategy(self.config, self.keras_model)
-        self.model.performTraining(self.dataset)
+        self.model = DFLv1Strategy(self.config, self.keras_model, self.dataset)
+        self.model.performTraining()

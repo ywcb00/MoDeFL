@@ -2,6 +2,7 @@ syntax = "proto3";
 
 service ModelUpdate {
     rpc TransferModelUpdate(ModelWeights) returns (Ack) {}
+    rpc EvaluateModel(ModelWeights) returns (EvaluationMetrics) {}
 };
 
 message ModelWeights {
@@ -9,7 +10,15 @@ message ModelWeights {
     string ip_and_port = 2;
 };
 
+message EvaluationMetrics {
+    repeated Metric metrics = 1;
+};
+
+message Metric {
+    string key = 1;
+    float value = 2;
+};
+
 message Ack {
     // empty message for ack purpose
 };
-

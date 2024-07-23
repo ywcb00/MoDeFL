@@ -3,15 +3,17 @@ from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 import network.protos.ModelUpdate_pb2_grpc as ModelUpdate_pb2_grpc
+from tffmodel.KerasModel import KerasModel
 from tffmodel.ModelUtils import ModelUtils
 
 import asyncio
 import grpc
 import logging
+import numpy as np
 
 class DFLv1Strategy(IDFLStrategy):
-    def __init__(self, config, keras_model):
-        super().__init__(config, keras_model)
+    def __init__(self, config, keras_model, dataset):
+        super().__init__(config, keras_model, dataset)
         self.logger = logging.getLogger("model/DFLv1Strategy")
         self.logger.setLevel(config["log_level"])
 
@@ -21,7 +23,17 @@ class DFLv1Strategy(IDFLStrategy):
                 weights_serialized, self.keras_model.getWeights())
             self.model_update_market.put(weights, address)
 
-        callbacks = {"TransferModelUpdate": transferModelUpdateCallback}
+        def evaluateModelCallback(weights_serialized):
+            eval_model = KerasModel(self.config)
+            eval_model.initModel(self.dataset.val)
+            weights = SerializationUtils.deserializeModelWeights(
+                weights_serialized, eval_model.getWeights())
+            eval_model.setWeights(weights)
+            eval_metrics = eval_model.evaluate(self.dataset.val)
+            return eval_metrics
+
+        callbacks = {"TransferModelUpdate": transferModelUpdateCallback,
+            "EvaluateModel": evaluateModelCallback}
 
         self.model_update_service = ModelUpdateService(self.config)
         self.model_update_service.startServer(callbacks)
@@ -29,10 +41,10 @@ class DFLv1Strategy(IDFLStrategy):
     def stopServer(self):
         self.model_update_service.stopServer()
 
-    def fitLocal(self, dataset):
+    def fitLocal(self):
         self.logger.info("Fitting local model.")
         # TODO: change number of epochs for fit (to 1?)
-        self.keras_model.fit(dataset)
+        self.keras_model.fit(self.dataset)
 
     async def broadcastTo(self, weights_serialized, address):
         async with grpc.aio.insecure_channel(address) as channel:
@@ -59,12 +71,44 @@ class DFLv1Strategy(IDFLStrategy):
         avg_model_update = ModelUtils.averageModelWeights(list(model_updates.values()))
         self.keras_model.setWeights(avg_model_update)
 
-    def performTraining(self, dataset):
+    # obtain evaluation metrics from our own model evaluated on the neighbors' evaluation data
+    async def evaluateNeighbor(self, weights_serialized, address):
+        async with grpc.aio.insecure_channel(address) as channel:
+            stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
+            eval_metrics = await stub.EvaluateModel(ModelUpdate_pb2.ModelWeights(
+                layer_weights=weights_serialized,
+                ip_and_port=self.config["address"]))
+        return eval_metrics.metrics
+
+    async def evaluateAllNeighbors(self, weights_serialized):
+        tasks = []
+        for addr in self.config["neighbors"]:
+            tasks.append(asyncio.create_task(self.evaluateNeighbor(weights_serialized, addr)))
+        eval_metrics = []
+        for t in tasks:
+            response = await t
+            eval_metrics.append(dict([(elem.key, elem.value) for elem in response]))
+        return eval_metrics
+
+    def evaluate(self):
+        weights = self.keras_model.getWeights()
+        weights_serialized = SerializationUtils.serializeModelWeights(weights)
+
+        eval_metrics = asyncio.run(self.evaluateAllNeighbors(weights_serialized))
+        eval_metrics.append(self.keras_model.evaluate(self.dataset.val))
+        eval_avg = dict([(key, np.mean([em[key] for em in eval_metrics]))
+            for key in eval_metrics[0].keys()])
+        return eval_avg
+
+    def performTraining(self):
         self.startServer()
 
         for counter in range(10):
-            self.fitLocal(dataset)
+            self.fitLocal()
             self.broadcast()
             self.aggregate()
+
+        eval_avg = self.evaluate()
+        self.logger.info(f'Evaluation with neighbors resulted in an average of {eval_avg}')
 
         self.stopServer()
