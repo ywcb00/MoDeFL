@@ -95,7 +95,6 @@ class DFLv1Strategy(IDFLStrategy):
         return eval_metrics
 
     def evaluate(self):
-        # TODO: verify that it is deterministic
         weights = self.keras_model.getWeights()
         weights_serialized = SerializationUtils.serializeModelWeights(weights)
 
