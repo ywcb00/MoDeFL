@@ -8,6 +8,7 @@ from tffdataset.FedDataset import PartitioningScheme
 from enum import Enum
 import getopt
 import logging
+import os
 import sys
 
 config = {
@@ -21,6 +22,8 @@ config = {
     "port": 50051,
     "address_file": "./resources/actor_addresses.txt",
     "adjacency_file": "./resources/actor_adjacency.txt",
+
+    "num_threads_server": os.cpu_count(),
 
     "learning_type": LearningType.DFLv1,
 

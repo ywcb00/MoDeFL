@@ -48,7 +48,7 @@ class InitializationService:
 
     def waitForInitialization(self, callbacks):
         port = self.config["port"]
-        num_threads = 4 # TODO: define the maximal number of thread w.r.t. the CPU
+        num_threads = self.config["num_threads_server"]
 
         self.server = None
         callbacks["StartLearning"] = lambda: self.server.stop(None)

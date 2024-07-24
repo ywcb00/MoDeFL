@@ -33,7 +33,7 @@ class ModelUpdateService:
 
     def startServer(self, callbacks):
         port = self.config["port"]
-        num_threads = 4 # TODO: define the maximal number of thread w.r.t. the CPU
+        num_threads = self.config["num_threads_server"]
 
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=num_threads))
         ModelUpdate_pb2_grpc.add_ModelUpdateServicer_to_server(
