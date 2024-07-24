@@ -20,6 +20,7 @@ config = {
 
     "port": 50051,
     "address_file": "./resources/actor_addresses.txt",
+    "adjacency_file": "./resources/actor_adjacency.txt",
 
     "learning_type": LearningType.DFLv1,
 
@@ -34,7 +35,7 @@ class ExecType(Enum):
     ACTOR = 2
 
 def printHelp(program_name):
-    print("Initiator usage:", program_name, "--initiate", "[--addr_file=<PATH>]")
+    print("Initiator usage:", program_name, "--initiate", "[--addr_file=<PATH>]", "[--adj_file=<PATH>]")
     print("Actor usage:", program_name, "--act", "--port=<PORT>")
 
 def main(argv):
@@ -45,7 +46,7 @@ def main(argv):
     exec_type = None
 
     try:
-        opts, args = getopt.getopt(argv[1:], "hiap:", ["help", "initiate", "act", "port=", "addr_file="])
+        opts, args = getopt.getopt(argv[1:], "hiap:", ["help", "initiate", "act", "port=", "addr_file=", "addr_file="])
     except getopt.GetoptError:
         print("Wrong usage.")
         printHelp(argv[0])
@@ -62,6 +63,8 @@ def main(argv):
             config["port"] = arg
         elif opt in ("--addr_file"):
             config["address_file"] = arg
+        elif opt in ("--adj_file"):
+            config["adjacency_file"] = arg
 
     match exec_type:
         case ExecType.INITIATOR:

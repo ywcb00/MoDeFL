@@ -1,5 +1,6 @@
 
 from model.SerializationUtils import SerializationUtils
+from network.NetworkUtils import NetworkUtils
 import network.protos.Initialization_pb2 as Initialization_pb2
 import network.protos.Initialization_pb2_grpc as Initialization_pb2_grpc
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
@@ -10,6 +11,7 @@ import asyncio
 import grpc
 import itertools
 import logging
+import numpy as np
 
 class Initiator:
     actor_idx = itertools.count()
@@ -46,7 +48,7 @@ class Initiator:
         return
 
     async def registerNeighbors(self, addr, addresses):
-        addresses = [a for a in addresses if a != addr] # TODO: read and use custom adjacency matrix
+        addresses = [a for a in addresses if a != addr]
         self.logger.debug(f'Connecting to {addr}')
         async with grpc.aio.insecure_channel(addr) as channel:
             stub = Initialization_pb2_grpc.InitializeStub(channel)
@@ -65,11 +67,12 @@ class Initiator:
                 pass
         self.logger.debug(f'Started learning on {addr}')
 
-    async def initialize(self, addresses):
+    async def initialize(self, addresses, adj_mat):
         tasks = []
         for addr in addresses:
             tasks.append(asyncio.create_task(self.initializeActor(addr)))
-            tasks.append(asyncio.create_task(self.registerNeighbors(addr, addresses)))
+            neighbor_addresses = NetworkUtils.getNeighborAddresses(addr, addresses, adj_mat)
+            tasks.append(asyncio.create_task(self.registerNeighbors(addr, neighbor_addresses)))
         for t in tasks:
             await t
 
@@ -82,6 +85,9 @@ class Initiator:
 
     def initiate(self):
         actor_addresses = [addr.strip() for addr in open(self.config["address_file"])]
-        asyncio.run(self.initialize(actor_addresses))
+        actor_adjacency = np.fromfile(self.config["adjacency_file"], dtype=int, sep=" ")
+        actor_adjacency = np.reshape(actor_adjacency,
+            newshape=(len(actor_addresses), len(actor_addresses)))
+        asyncio.run(self.initialize(actor_addresses, actor_adjacency))
         asyncio.run(self.startLearning(actor_addresses))
         self.logger.info("Initiation completed.")
