@@ -32,14 +32,18 @@ class DFLv1Strategy(IDFLStrategy):
             eval_metrics = eval_model.evaluate(self.dataset.val)
             return eval_metrics
 
+        self.termination_permission = dict(
+            [(addr, False) for addr in self.config["neighbors"]])
+        self.termination_permission[self.config["address"]] = False
+        def allowTerminationCallback(address):
+            self.registerTerminationPermission(address)
+
         callbacks = {"TransferModelUpdate": transferModelUpdateCallback,
-            "EvaluateModel": evaluateModelCallback}
+            "EvaluateModel": evaluateModelCallback,
+            "AllowTermination": allowTerminationCallback}
 
         self.model_update_service = ModelUpdateService(self.config)
         self.model_update_service.startServer(callbacks)
-
-    def stopServer(self):
-        self.model_update_service.stopServer()
 
     def fitLocal(self):
         self.logger.info("Fitting local model.")
@@ -91,6 +95,7 @@ class DFLv1Strategy(IDFLStrategy):
         return eval_metrics
 
     def evaluate(self):
+        # TODO: verify that it is deterministic
         weights = self.keras_model.getWeights()
         weights_serialized = SerializationUtils.serializeModelWeights(weights)
 
@@ -99,6 +104,29 @@ class DFLv1Strategy(IDFLStrategy):
         eval_avg = dict([(key, np.mean([em[key] for em in eval_metrics]))
             for key in eval_metrics[0].keys()])
         return eval_avg
+
+    def registerTerminationPermission(self, address):
+        self.termination_permission[address] = True
+        if(all(self.termination_permission.values())):
+            self.model_update_service.stopServer()
+
+    async def signalTerminationPermissionTo(self, address):
+        async with grpc.aio.insecure_channel(address) as channel:
+            stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
+            await stub.AllowTermination(ModelUpdate_pb2.NetworkID(
+                ip_and_port=self.config["address"]))
+
+    async def signalTerminationPermission(self):
+        tasks = []
+        for addr in self.config["neighbors"]:
+            tasks.append(asyncio.create_task(self.signalTerminationPermissionTo(addr)))
+        for t in tasks:
+            await t
+
+    def stop(self):
+        self.registerTerminationPermission(self.config["address"])
+        asyncio.run(self.signalTerminationPermission())
+        self.model_update_service.waitForTermination()
 
     def performTraining(self):
         self.startServer()
@@ -111,4 +139,4 @@ class DFLv1Strategy(IDFLStrategy):
         eval_avg = self.evaluate()
         self.logger.info(f'Evaluation with neighbors resulted in an average of {eval_avg}')
 
-        self.stopServer()
+        self.stop()

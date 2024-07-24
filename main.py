@@ -75,7 +75,7 @@ def main(argv):
         case ExecType.ACTOR:
             logger.info("Starting Actor")
             actor = Actor(config)
-            actor.initialize()
+            actor.run()
             sys.exit()
         case _:
             print("Wrong usage.")

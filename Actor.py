@@ -82,7 +82,12 @@ class Actor:
         init_service = InitializationService(self.config)
         init_service.waitForInitialization(callbacks)
 
+    def train(self):
         self.logger.info("Starting with the learning procedure")
 
         self.model = DFLv1Strategy(self.config, self.keras_model, self.dataset)
         self.model.performTraining()
+
+    def run(self):
+        self.initialize()
+        self.train()

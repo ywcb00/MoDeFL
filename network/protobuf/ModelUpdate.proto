@@ -3,6 +3,7 @@ syntax = "proto3";
 service ModelUpdate {
     rpc TransferModelUpdate(ModelWeights) returns (Ack) {}
     rpc EvaluateModel(ModelWeights) returns (EvaluationMetrics) {}
+    rpc AllowTermination(NetworkID) returns (Ack) {}
 };
 
 message ModelWeights {
@@ -17,6 +18,10 @@ message EvaluationMetrics {
 message Metric {
     string key = 1;
     float value = 2;
+};
+
+message NetworkID {
+    string ip_and_port = 1;
 };
 
 message Ack {

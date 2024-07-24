@@ -21,6 +21,10 @@ class Servicer(ModelUpdate_pb2_grpc.ModelUpdateServicer):
             metrics=[ModelUpdate_pb2.Metric(key=key, value=val)
                 for key, val in eval_metrics.items()])
 
+    def AllowTermination(self, request, context):
+        self.callbacks["AllowTermination"](request.ip_and_port)
+        return ModelUpdate_pb2.Ack()
+
 class ModelUpdateService:
     def __init__(self, config):
         self.config = config
@@ -39,6 +43,8 @@ class ModelUpdateService:
         self.logger.info(f'Server started, listening on {port}.')
 
     def stopServer(self):
-        self.server.stop(grace=5)
+        self.server.stop(grace=1)
+
+    def waitForTermination(self):
         self.server.wait_for_termination()
         self.logger.info('Server terminated.')
