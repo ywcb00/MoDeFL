@@ -85,15 +85,13 @@ class Initiator:
                 model_config_serialized, optimizer_config_serialized, init_weights_serialized)))
             neighbor_addresses = NetworkUtils.getNeighborAddresses(addr, addresses, adj_mat)
             tasks.append(asyncio.create_task(self.registerNeighbors(addr, neighbor_addresses)))
-        for t in tasks:
-            await t
+        await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
     async def startLearning(self, addresses):
         tasks = []
         for addr in addresses:
             tasks.append(asyncio.create_task(self.startActorLearning(addr)))
-        for t in tasks:
-            await t
+        await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
     def initiate(self):
         actor_addresses = [addr.strip() for addr in open(self.config["address_file"])]

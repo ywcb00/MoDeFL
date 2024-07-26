@@ -61,8 +61,7 @@ class DFLv1Strategy(IDFLStrategy):
         tasks = []
         for addr in self.config["neighbors"]:
             tasks.append(asyncio.create_task(self.broadcastTo(weights_serialized, addr)))
-        for t in tasks:
-            await t
+        await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
     def broadcast(self):
         weights = self.keras_model.getWeights()
@@ -119,8 +118,7 @@ class DFLv1Strategy(IDFLStrategy):
         tasks = []
         for addr in self.config["neighbors"]:
             tasks.append(asyncio.create_task(self.signalTerminationPermissionTo(addr)))
-        for t in tasks:
-            await t
+        await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
     def stop(self):
         self.registerTerminationPermission(self.config["address"])
