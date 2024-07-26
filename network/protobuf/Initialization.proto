@@ -24,7 +24,8 @@ message Dataset {
 };
 
 message Model {
-    bytes model = 1; // serialized model
+    bytes model_config = 1; // serialized model configuration
+    bytes optimizer_config = 2; // serialized optimizer configuration
 };
 
 message LearningStrategy {

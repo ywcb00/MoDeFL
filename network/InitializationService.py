@@ -21,7 +21,7 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
         return ModelUpdate_pb2.Ack()
 
     def InitModel(self, request, context):
-        self.callbacks["InitModel"](request.model)
+        self.callbacks["InitModel"](request.model_config, request.optimizer_config)
         return ModelUpdate_pb2.Ack()
 
     def InitModelWeights(self, request, context):

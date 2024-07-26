@@ -6,12 +6,14 @@ import network.protos.Initialization_pb2_grpc as Initialization_pb2_grpc
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 from tffdataset.DatasetUtils import getDatasetElementSpec
 from tffmodel.KerasModel import KerasModel
+from tffmodel.ModelBuilderUtils import getFedLearningRates, getModelBuilder
 
 import asyncio
 import grpc
 import itertools
 import logging
 import numpy as np
+import tensorflow as tf
 
 class Initiator:
     actor_idx = itertools.count()
@@ -21,7 +23,8 @@ class Initiator:
         self.logger = logging.getLogger("Initiator")
         self.logger.setLevel(config["log_level"])
 
-    async def initializeActor(self, addr):
+    async def initializeActor(self, addr, model_config_serialized,
+        optimizer_config_serialized, init_weights_serialized):
         self.logger.debug(f'Connecting to {addr}')
         async with grpc.aio.insecure_channel(addr) as channel:
             stub = Initialization_pb2_grpc.InitializeStub(channel)
@@ -34,11 +37,9 @@ class Initiator:
                 partition_index=next(self.actor_idx),
                 seed=self.config["seed"]))
 
-            await stub.InitModel(Initialization_pb2.Model(model=None))
+            await stub.InitModel(Initialization_pb2.Model(
+                model_config=model_config_serialized, optimizer_config=optimizer_config_serialized))
 
-            init_weights = KerasModel.createKerasModelElementSpec(
-                getDatasetElementSpec(self.config), self.config).get_weights()
-            init_weights_serialized = SerializationUtils.serializeModelWeights(init_weights)
             await stub.InitModelWeights(ModelUpdate_pb2.ModelWeights(
                 layer_weights=init_weights_serialized, ip_and_port=addr))
 
@@ -68,9 +69,20 @@ class Initiator:
         self.logger.debug(f'Started learning on {addr}')
 
     async def initialize(self, addresses, adj_mat):
+        model = KerasModel.createKerasModelElementSpec(
+            getDatasetElementSpec(self.config), self.config)
+        _, local_lr = getFedLearningRates(self.config)
+        actor_optimizer = tf.keras.optimizers.SGD(learning_rate=local_lr)
+        model_config_serialized, optimizer_config_serialized = SerializationUtils.serializeModel(
+            model, actor_optimizer)
+
+        init_weights = model.get_weights()
+        init_weights_serialized = SerializationUtils.serializeModelWeights(init_weights)
+
         tasks = []
         for addr in addresses:
-            tasks.append(asyncio.create_task(self.initializeActor(addr)))
+            tasks.append(asyncio.create_task(self.initializeActor(addr,
+                model_config_serialized, optimizer_config_serialized, init_weights_serialized)))
             neighbor_addresses = NetworkUtils.getNeighborAddresses(addr, addresses, adj_mat)
             tasks.append(asyncio.create_task(self.registerNeighbors(addr, neighbor_addresses)))
         for t in tasks:

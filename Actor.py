@@ -48,13 +48,11 @@ class Actor:
             self.logger.debug(f'Using partition {self.config["part_index"]} of '
                 + f'dataset {self.config["dataset_id"].name}.')
 
-        def initializeModelCallback(serialized_model):
-            # TODO: support arbitrary serialized models from the initiator
-            self.keras_model = KerasModel(self.config)
-            _, local_lr = getFedLearningRates(self.config)
-            local_optimizer = tf.keras.optimizers.SGD(learning_rate=local_lr)
-            self.keras_model.initModelWithOptimizer(self.fed_dataset.train[0],
-                optimizer=local_optimizer)
+        def initializeModelCallback(model_config_serialized, optimizer_config_serialized):
+            model, optimizer = SerializationUtils.deserializeModel(
+                model_config_serialized, optimizer_config_serialized)
+            self.keras_model = KerasModel.fromExistingModel(model, optimizer, self.config)
+
             self.logger.debug("Initialized the model.")
 
         def initializeModelWeightsCallback(weights_serialized):
