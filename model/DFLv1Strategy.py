@@ -24,12 +24,11 @@ class DFLv1Strategy(IDFLStrategy):
             self.model_update_market.put(weights, address)
 
         def evaluateModelCallback(weights_serialized):
-            eval_model = KerasModel(self.config)
-            eval_model.initModel(self.dataset.val)
+            eval_model = self.keras_model.clone()
             weights = SerializationUtils.deserializeModelWeights(
                 weights_serialized, eval_model.getWeights())
             eval_model.setWeights(weights)
-            eval_metrics = eval_model.evaluate(self.dataset.val)
+            eval_metrics = KerasModel.evaluateKerasModel(eval_model.getModel(), self.dataset.val)
             return eval_metrics
 
         self.termination_permission = dict(
@@ -47,6 +46,7 @@ class DFLv1Strategy(IDFLStrategy):
 
     def fitLocal(self):
         self.logger.info("Fitting local model.")
+        self.previous_weights = self.keras_model.getWeights()
         # TODO: change number of epochs for fit (to 1?)
         self.keras_model.fit(self.dataset)
 
@@ -64,15 +64,18 @@ class DFLv1Strategy(IDFLStrategy):
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
     def broadcast(self):
-        weights = self.keras_model.getWeights()
-        weights_serialized = SerializationUtils.serializeModelWeights(weights)
+        current_weights = self.keras_model.getWeights()
+        model_delta = [cw - pw for cw, pw in zip(current_weights, self.previous_weights)]
+        model_delta_serialized = SerializationUtils.serializeModelWeights(model_delta)
 
-        asyncio.run(self.broadcastToNeighbors(weights_serialized))
+        asyncio.run(self.broadcastToNeighbors(model_delta_serialized))
 
     def aggregate(self):
-        model_updates = self.model_update_market.getFromAll()
-        avg_model_update = ModelUtils.averageModelWeights(list(model_updates.values()))
-        self.keras_model.setWeights(avg_model_update)
+        current_weights = self.keras_model.getWeights()
+        model_deltas = self.model_update_market.getFromAll()
+        avg_model_deltas = ModelUtils.averageModelWeights(list(model_deltas.values()))
+        new_weights = [cw + md for cw, md in zip(current_weights, avg_model_deltas)]
+        self.keras_model.setWeights(new_weights)
 
     # obtain evaluation metrics from our own model evaluated on the neighbors' evaluation data
     async def evaluateNeighbor(self, weights_serialized, address):
@@ -98,7 +101,8 @@ class DFLv1Strategy(IDFLStrategy):
         weights_serialized = SerializationUtils.serializeModelWeights(weights)
 
         eval_metrics = asyncio.run(self.evaluateAllNeighbors(weights_serialized))
-        eval_metrics.append(self.keras_model.evaluate(self.dataset.val))
+        eval_metrics.append(KerasModel.evaluateKerasModel(
+            self.keras_model.getModel(), self.dataset.val))
         eval_avg = dict([(key, np.mean([em[key] for em in eval_metrics]))
             for key in eval_metrics[0].keys()])
         return eval_avg
