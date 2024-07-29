@@ -1,5 +1,19 @@
+from model.DFLv1Strategy import DFLv1Strategy
+from model.DFLv2Strategy import DFLv2Strategy
 
 from enum import Enum
 
 class LearningType(Enum):
     DFLv1 = 1
+    DFLv2 = 2
+
+class LearningStrategy:
+    @classmethod
+    def getStrategy(self_class, config, keras_model, dataset):
+        match config["learning_type"]:
+            case LearningType.DFLv1:
+                return DFLv1Strategy(config, keras_model, dataset)
+            case LearningType.DFLv2:
+                return DFLv2Strategy(config, keras_model, dataset)
+            case _:
+                raise NotImplementedError

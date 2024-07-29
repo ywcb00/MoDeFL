@@ -11,10 +11,10 @@ import grpc
 import logging
 import numpy as np
 
-class DFLv1Strategy(IDFLStrategy):
+class DFLv2Strategy(IDFLStrategy):
     def __init__(self, config, keras_model, dataset):
         super().__init__(config, keras_model, dataset)
-        self.logger = logging.getLogger("model/DFLv1Strategy")
+        self.logger = logging.getLogger("model/DFLv2Strategy")
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
@@ -46,22 +46,23 @@ class DFLv1Strategy(IDFLStrategy):
 
     def fitLocal(self):
         self.logger.info("Fitting local model.")
-        self.previous_weights = self.keras_model.getWeights()
         # TODO: change number of epochs for fit (to 1?)
         self.keras_model.fit(self.dataset)
 
     def broadcast(self):
-        current_weights = self.keras_model.getWeights()
-        model_delta = [cw - pw for cw, pw in zip(current_weights, self.previous_weights)]
-        model_delta_serialized = SerializationUtils.serializeModelWeights(model_delta)
+        weights = self.keras_model.getWeights()
+        weights_serialized = SerializationUtils.serializeModelWeights(weights)
 
-        asyncio.run(self.broadcastWeightsToNeighbors(model_delta_serialized))
+        asyncio.run(self.broadcastWeightsToNeighbors(weights_serialized))
 
     def aggregate(self):
+        # TODO: set the hyperparameters eps_t and alph_t (i.e., consensus step-size and mixing weights)
+        eps_t = 1 / len(self.config["neighbors"])
+        alph_t = dict([(actor_addr, 1) for actor_addr in self.config["neighbors"]])
         current_weights = self.keras_model.getWeights()
-        model_deltas = self.model_update_market.getOneFromAll()
-        avg_model_deltas = AggregationUtils.averageModelWeights(list(model_deltas.values()))
-        new_weights = [cw + md for cw, md in zip(current_weights, avg_model_deltas)]
+        model_updates = self.model_update_market.getOneFromAll()
+        new_weights = AggregationUtils.consensusbasedFedAvg(
+            current_weights, model_updates, eps_t, alph_t)
         self.keras_model.setWeights(new_weights)
 
     def evaluate(self):

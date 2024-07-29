@@ -17,17 +17,17 @@ config = {
     "dataset_id": DatasetID.Mnist,
 
     "part_scheme": PartitioningScheme.ROUND_ROBIN,
+    # TODO: do we still need to specify the number of workers here or can we obtain them from the network configuration (also on the actor?)
     "num_workers": 4,
 
-    "port": 50051,
     "address_file": "./resources/actor_addresses.txt",
     "adjacency_file": "./resources/actor_adjacency.txt",
 
     "num_threads_server": os.cpu_count(),
 
-    "learning_type": LearningType.DFLv1,
+    "learning_type": LearningType.DFLv2,
 
-    "num_train_rounds": 1, # FIXME: this number corresponds to the local training rounds at the moment
+    "num_train_rounds": 1, # TODO: FIXME: this number corresponds to the local training rounds at the moment
 
     "log_dir": "./log/training",
     "log_level": logging.DEBUG,
@@ -49,7 +49,7 @@ def main(argv):
     exec_type = None
 
     try:
-        opts, args = getopt.getopt(argv[1:], "hiap:", ["help", "initiate", "act", "port=", "addr_file=", "addr_file="])
+        opts, args = getopt.getopt(argv[1:], "hiap:", ["help", "initiate", "act", "port=", "addr_file=", "adj_file="])
     except getopt.GetoptError:
         print("Wrong usage.")
         printHelp(argv[0])

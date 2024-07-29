@@ -10,7 +10,7 @@ class ModelUpdateMarket:
         self.model_updates[address].put(weights)
 
     # block until we get one model update from each neighbor
-    def getFromAll(self):
+    def getOneFromAll(self):
         result = dict()
         for addr, queue in self.model_updates.items():
             result[addr] = queue.get(block=True, timeout=None)
