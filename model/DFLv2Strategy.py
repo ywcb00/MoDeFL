@@ -102,7 +102,8 @@ class DFLv2Strategy(IDFLStrategy):
         self.startServer()
 
         # TODO: think about the number of epochs for learning (perhaps termination based on local training loss?)
-        for counter in range(10):
+        for epoch in range(10):
+            self.logger.debug(f'Federated epoch #{epoch}')
             self.fitLocal()
             self.broadcast()
             self.aggregate()

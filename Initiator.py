@@ -7,6 +7,7 @@ import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 from tffdataset.DatasetUtils import getDatasetElementSpec
 from tffmodel.KerasModel import KerasModel
 from tffmodel.ModelBuilderUtils import getFedLearningRates, getModelBuilder
+from tffmodel.Weights import Weights
 
 import asyncio
 import grpc
@@ -76,7 +77,7 @@ class Initiator:
         model_config_serialized, optimizer_config_serialized = SerializationUtils.serializeModel(
             model, actor_optimizer)
 
-        init_weights = model.get_weights()
+        init_weights = Weights(model.get_weights())
         init_weights_serialized = SerializationUtils.serializeModelWeights(init_weights)
 
         tasks = []

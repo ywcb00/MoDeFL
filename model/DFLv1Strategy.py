@@ -52,7 +52,7 @@ class DFLv1Strategy(IDFLStrategy):
 
     def broadcast(self):
         current_weights = self.keras_model.getWeights()
-        model_delta = [cw - pw for cw, pw in zip(current_weights, self.previous_weights)]
+        model_delta = current_weights - self.previous_weights
         model_delta_serialized = SerializationUtils.serializeModelWeights(model_delta)
 
         asyncio.run(self.broadcastWeightsToNeighbors(model_delta_serialized))
@@ -61,7 +61,7 @@ class DFLv1Strategy(IDFLStrategy):
         current_weights = self.keras_model.getWeights()
         model_deltas = self.model_update_market.getOneFromAll()
         avg_model_deltas = AggregationUtils.averageModelWeights(list(model_deltas.values()))
-        new_weights = [cw + md for cw, md in zip(current_weights, avg_model_deltas)]
+        new_weights = current_weights + avg_model_deltas
         self.keras_model.setWeights(new_weights)
 
     def evaluate(self):
@@ -101,7 +101,8 @@ class DFLv1Strategy(IDFLStrategy):
         self.startServer()
 
         # TODO: think about the number of epochs for learning (perhaps termination based on local training loss?)
-        for counter in range(10):
+        for epoch in range(10):
+            self.logger.debug(f'Federated epoch #{epoch}')
             self.fitLocal()
             self.broadcast()
             self.aggregate()
