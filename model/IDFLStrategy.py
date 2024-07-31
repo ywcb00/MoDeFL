@@ -63,5 +63,37 @@ class IDFLStrategy(ABC):
     def evaluate(self):
         pass
 
-    def performTraining(self):
+    def registerTerminationPermission(self, address):
+        self.termination_permission[address] = True
+        if(all(self.termination_permission.values())):
+            self.model_update_service.stopServer()
+
+    async def signalTerminationPermissionTo(self, address):
+        async with grpc.aio.insecure_channel(address) as channel:
+            stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
+            await stub.AllowTermination(ModelUpdate_pb2.NetworkID(
+                ip_and_port=self.config["address"]))
+
+    async def signalTerminationPermission(self):
+        tasks = []
+        for addr in self.config["neighbors"]:
+            tasks.append(asyncio.create_task(self.signalTerminationPermissionTo(addr)))
+        await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
+
+    def stop(self):
         pass
+
+    def performTraining(self):
+        self.startServer()
+
+        # TODO: think about the number of epochs for learning (perhaps termination based on local training loss?)
+        for epoch in range(10):
+            self.logger.debug(f'Federated epoch #{epoch}')
+            self.fitLocal()
+            self.broadcast()
+            self.aggregate()
+
+        eval_avg = self.evaluate()
+        self.logger.info(f'Evaluation with neighbors resulted in an average of {eval_avg}')
+
+        self.stop()

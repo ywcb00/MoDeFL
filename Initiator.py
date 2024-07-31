@@ -1,4 +1,5 @@
 
+from model.LearningStrategy import LearningType
 from model.SerializationUtils import SerializationUtils
 from network.NetworkUtils import NetworkUtils
 import network.protos.Initialization_pb2 as Initialization_pb2
@@ -49,12 +50,12 @@ class Initiator:
         self.logger.debug(f'Initialized {addr}')
         return
 
-    async def registerNeighbors(self, addr, addresses):
-        addresses = [a for a in addresses if a != addr]
+    async def registerNeighbors(self, addr, neighbor_addresses):
         self.logger.debug(f'Connecting to {addr}')
         async with grpc.aio.insecure_channel(addr) as channel:
             stub = Initialization_pb2_grpc.InitializeStub(channel)
-            await stub.RegisterNeighbors(Initialization_pb2.NeighborSpec(ip_and_port=addresses))
+            await stub.RegisterNeighbors(
+                Initialization_pb2.NeighborSpec(ip_and_port=neighbor_addresses))
         self.logger.debug(f'Registered neighbors of {addr}')
         return
 
@@ -85,6 +86,9 @@ class Initiator:
             tasks.append(asyncio.create_task(self.initializeActor(addr,
                 model_config_serialized, optimizer_config_serialized, init_weights_serialized)))
             neighbor_addresses = NetworkUtils.getNeighborAddresses(addr, addresses, adj_mat)
+            assert (self.config["learning_type"] != LearningType.DFLv1 or
+                    len(neighbor_addresses)+1 == self.config["num_actors"]
+                ), "DFLv1 requires a fully connected actor network."
             tasks.append(asyncio.create_task(self.registerNeighbors(addr, neighbor_addresses)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
@@ -96,9 +100,10 @@ class Initiator:
 
     def initiate(self):
         actor_addresses = [addr.strip() for addr in open(self.config["address_file"])]
+        self.config["num_actors"] = len(actor_addresses)
         actor_adjacency = np.fromfile(self.config["adjacency_file"], dtype=int, sep=" ")
         actor_adjacency = np.reshape(actor_adjacency,
-            newshape=(len(actor_addresses), len(actor_addresses)))
+            newshape=(self.config["num_actors"], self.config["num_actors"]))
         asyncio.run(self.initialize(actor_addresses, actor_adjacency))
         asyncio.run(self.startLearning(actor_addresses))
         self.logger.info("Initiation completed.")
