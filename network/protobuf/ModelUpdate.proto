@@ -8,8 +8,13 @@ service ModelUpdate {
 
 message ModelWeights {
     repeated bytes layer_weights = 1;
-    string ip_and_port = 2;
+    optional ModelGradient gradient = 2;
+    string ip_and_port = 3;
 };
+
+message ModelGradient {
+    repeated bytes gradient = 1;
+}
 
 message EvaluationMetrics {
     repeated Metric metrics = 1;

@@ -6,8 +6,8 @@ class ModelUpdateMarket:
         self.model_updates = dict(
             [(addr, Queue()) for addr in config["neighbors"]])
 
-    def put(self, weights, address):
-        self.model_updates[address].put(weights)
+    def put(self, elem, address):
+        self.model_updates[address].put(elem)
 
     # block until we get one model update from each neighbor
     def getOneFromAll(self):

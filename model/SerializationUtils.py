@@ -1,3 +1,4 @@
+from tffmodel.Gradient import Gradient
 from tffmodel.Weights import Weights
 
 import numpy as np
@@ -7,17 +8,32 @@ import tensorflow as tf
 class SerializationUtils:
     @classmethod
     def serializeModelWeights(self_class, weights):
+        # NOTE: we transfer the weights as float32 albeit they could be float64
         # TODO: find a more efficient way to serialize the weights object
-        serialized_weights = [layer_weights.tobytes() for layer_weights in weights._weights]
+        serialized_weights = [np.float32(layer_weights).tobytes() for layer_weights in weights.get()]
         return serialized_weights
 
     @classmethod
     # NOTE: param source weights is used to identify the respective types and shapes
-    def deserializeModelWeights(self_class, weights_serialized, source_weights):
-        weights = [np.frombuffer(layer_weights, dtype=source_weights[idx].dtype.name)
-                .reshape(source_weights[idx].shape)
+    def deserializeModelWeights(self_class, weights_serialized, shape_weights):
+        weights = [np.frombuffer(layer_weights, dtype=np.float32)
+                .reshape(shape_weights[idx].shape)
             for idx, layer_weights in enumerate(weights_serialized)]
         return Weights(weights)
+
+    @classmethod
+    def serializeGradient(self_class, gradient):
+        # NOTE: we transfer the gradient as float32 albeit it is float64
+        # TODO: find a more efficient way to serialize the weights object
+        serialized_gradient = [np.float32(layer_gradient).tobytes() for layer_gradient in gradient.get()]
+        return serialized_gradient
+
+    @classmethod
+    def deserializeGradient(self_class, gradient_serialized, shape_gradient):
+        gradient = [np.frombuffer(layer_gradient, dtype=np.float32)
+                .reshape(shape_gradient[idx].shape)
+            for idx, layer_gradient in enumerate(gradient_serialized)]
+        return Gradient(gradient)
 
     @classmethod
     def serializeModel(self_class, model, optimizer):

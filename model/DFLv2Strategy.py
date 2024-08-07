@@ -2,12 +2,9 @@ from model.AggregationUtils import AggregationUtils
 from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
-import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
-import network.protos.ModelUpdate_pb2_grpc as ModelUpdate_pb2_grpc
 from tffmodel.KerasModel import KerasModel
 
 import asyncio
-import grpc
 import logging
 import numpy as np
 
@@ -18,7 +15,7 @@ class DFLv2Strategy(IDFLStrategy):
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
-        def transferModelUpdateCallback(weights_serialized, address):
+        def transferModelUpdateCallback(weights_serialized, _, address):
             weights = SerializationUtils.deserializeModelWeights(
                 weights_serialized, self.keras_model.getWeights())
             self.model_update_market.put(weights, address)

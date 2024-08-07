@@ -1,4 +1,4 @@
-
+from model.SerializationUtils import SerializationUtils
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 import network.protos.ModelUpdate_pb2_grpc as ModelUpdate_pb2_grpc
 
@@ -12,7 +12,7 @@ class Servicer(ModelUpdate_pb2_grpc.ModelUpdateServicer):
 
     def TransferModelUpdate(self, request, context):
         self.callbacks["TransferModelUpdate"](request.layer_weights,
-            request.ip_and_port)
+            request.gradient.gradient, request.ip_and_port)
         return ModelUpdate_pb2.Ack()
 
     def EvaluateModel(self, request, context):

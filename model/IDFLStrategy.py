@@ -13,12 +13,11 @@ class IDFLStrategy(ABC):
         self.model_update_market = ModelUpdateMarket(self.config)
         self.dataset = dataset
 
+    @abstractmethod
     def startServer(self):
         pass
 
-    def stopServer(self):
-        pass
-
+    @abstractmethod
     def fitLocal(self):
         pass
 
@@ -35,9 +34,26 @@ class IDFLStrategy(ABC):
             tasks.append(asyncio.create_task(self.broadcastWeightsTo(weights_serialized, addr)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
+    async def broadcastWeightsAndGradientTo(self, weights_serialized, gradient_serialized, address):
+        async with grpc.aio.insecure_channel(address) as channel:
+            stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
+            await stub.TransferModelUpdate(ModelUpdate_pb2.ModelWeights(
+                layer_weights=weights_serialized,
+                gradient=ModelUpdate_pb2.ModelGradient(gradient=gradient_serialized),
+                ip_and_port=self.config["address"]))
+
+    async def broadcastWeightsAndGradientsToNeighbors(self, weights_serialized, gradients_serialized):
+        tasks = []
+        for addr in self.config["neighbors"]:
+            tasks.append(asyncio.create_task(self.broadcastWeightsAndGradientTo(
+                weights_serialized, gradients_serialized[addr], addr)))
+        await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
+
+    @abstractmethod
     def broadcast(self):
         pass
 
+    @abstractmethod
     def aggregate(self):
         pass
 
@@ -60,6 +76,7 @@ class IDFLStrategy(ABC):
             eval_metrics.append(dict([(elem.key, elem.value) for elem in response]))
         return eval_metrics
 
+    @abstractmethod
     def evaluate(self):
         pass
 
@@ -80,6 +97,7 @@ class IDFLStrategy(ABC):
             tasks.append(asyncio.create_task(self.signalTerminationPermissionTo(addr)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
+    @abstractmethod
     def stop(self):
         pass
 
@@ -87,7 +105,7 @@ class IDFLStrategy(ABC):
         self.startServer()
 
         # TODO: think about the number of epochs for learning (perhaps termination based on local training loss?)
-        for epoch in range(10):
+        for epoch in range(5):
             self.logger.debug(f'Federated epoch #{epoch}')
             self.fitLocal()
             self.broadcast()

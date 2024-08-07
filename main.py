@@ -26,7 +26,7 @@ config = {
 
     "num_threads_server": os.cpu_count(),
 
-    "learning_type": LearningType.DFLv2,
+    "learning_type": LearningType.DFLv3,
 
     "num_train_rounds": 1, # TODO: FIXME: this number corresponds to the local training rounds at the moment
 
