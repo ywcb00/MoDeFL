@@ -24,8 +24,8 @@ class IDFLStrategy(ABC):
     async def broadcastWeightsTo(self, weights_serialized, address):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
-            await stub.TransferModelUpdate(ModelUpdate_pb2.ModelWeights(
-                layer_weights=weights_serialized,
+            await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
+                weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized),
                 ip_and_port=self.config["address"]))
 
     async def broadcastWeightsToNeighbors(self, weights_serialized):
@@ -37,8 +37,8 @@ class IDFLStrategy(ABC):
     async def broadcastWeightsAndGradientTo(self, weights_serialized, gradient_serialized, address):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
-            await stub.TransferModelUpdate(ModelUpdate_pb2.ModelWeights(
-                layer_weights=weights_serialized,
+            await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
+                weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized),
                 gradient=ModelUpdate_pb2.ModelGradient(gradient=gradient_serialized),
                 ip_and_port=self.config["address"]))
 
@@ -61,9 +61,8 @@ class IDFLStrategy(ABC):
     async def evaluateWeightsNeighbor(self, weights_serialized, address):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
-            eval_metrics = await stub.EvaluateModel(ModelUpdate_pb2.ModelWeights(
-                layer_weights=weights_serialized,
-                ip_and_port=self.config["address"]))
+            eval_metrics = await stub.EvaluateModel(
+                ModelUpdate_pb2.ModelWeights(weights=weights_serialized))
         return eval_metrics.metrics
 
     async def evaluateWeightsAllNeighbors(self, weights_serialized):

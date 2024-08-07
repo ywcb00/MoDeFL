@@ -43,7 +43,7 @@ class Initiator:
                 model_config=model_config_serialized, optimizer_config=optimizer_config_serialized))
 
             await stub.InitModelWeights(ModelUpdate_pb2.ModelWeights(
-                layer_weights=init_weights_serialized, ip_and_port=addr))
+                weights=init_weights_serialized))
 
             await stub.InitLearningStrategy(Initialization_pb2.LearningStrategy(
                 learning_type_id=self.config["learning_type"].value))

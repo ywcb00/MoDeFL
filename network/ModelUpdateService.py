@@ -11,12 +11,12 @@ class Servicer(ModelUpdate_pb2_grpc.ModelUpdateServicer):
         self.callbacks = callbacks
 
     def TransferModelUpdate(self, request, context):
-        self.callbacks["TransferModelUpdate"](request.layer_weights,
+        self.callbacks["TransferModelUpdate"](request.weights.weights,
             request.gradient.gradient, request.ip_and_port)
         return ModelUpdate_pb2.Ack()
 
     def EvaluateModel(self, request, context):
-        eval_metrics = self.callbacks["EvaluateModel"](request.layer_weights)
+        eval_metrics = self.callbacks["EvaluateModel"](request.weights)
         return ModelUpdate_pb2.EvaluationMetrics(
             metrics=[ModelUpdate_pb2.Metric(key=key, value=val)
                 for key, val in eval_metrics.items()])

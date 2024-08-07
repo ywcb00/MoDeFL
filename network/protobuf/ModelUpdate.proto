@@ -1,20 +1,24 @@
 syntax = "proto3";
 
 service ModelUpdate {
-    rpc TransferModelUpdate(ModelWeights) returns (Ack) {}
+    rpc TransferModelUpdate(ModelUpdateMessage) returns (Ack) {}
     rpc EvaluateModel(ModelWeights) returns (EvaluationMetrics) {}
     rpc AllowTermination(NetworkID) returns (Ack) {}
 };
 
-message ModelWeights {
-    repeated bytes layer_weights = 1;
+message ModelUpdateMessage {
+    ModelWeights weights = 1;
     optional ModelGradient gradient = 2;
     string ip_and_port = 3;
 };
 
+message ModelWeights {
+    repeated bytes weights = 1;
+};
+
 message ModelGradient {
     repeated bytes gradient = 1;
-}
+};
 
 message EvaluationMetrics {
     repeated Metric metrics = 1;
