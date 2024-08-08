@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+BASEPATH=$(dirname "$0")
+ROOTPATH="$BASEPATH/.."
+
 ADDR="localhost:50051"
 
 PROPAGATE_ARGS=()
@@ -12,6 +15,6 @@ for arg in "$@"; do
 done
 
 PORT=$(echo $ADDR | cut -d : -f 2)
-python main.py --act --port=$PORT "${PROPAGATE_ARGS[*]}"
+python $ROOTPATH/main.py --act --port=$PORT "${PROPAGATE_ARGS[*]}"
 
 exit

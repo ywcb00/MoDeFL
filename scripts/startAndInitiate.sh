@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+BASEPATH=$(dirname "$0")
+
 ADDR_FILE="resources/actor_addresses.txt"
 ADJ_FILE="./resources/actor_adjacency.txt"
 PROPAGATE_ARGS=()
@@ -14,12 +16,12 @@ done
 
 script_pid=()
 
-./startLocalActors.sh "$ADDR_FILE" "${PROPAGATE_ARGS[*]}" &
+$BASEPATH/startLocalActors.sh "$ADDR_FILE" "${PROPAGATE_ARGS[*]}" &
 script_pid+=("$!")
 
 sleep 3
 
-./initiate.sh --addr_file="$ADDR_FILE" --adj_file="$ADJ_FILE" "${PROPAGATE_ARGS[*]}" &
+$BASEPATH/initiate.sh --addr_file="$ADDR_FILE" --adj_file="$ADJ_FILE" "${PROPAGATE_ARGS[*]}" &
 script_pid+=("$!")
 
 wait ${script_pid[*]}
