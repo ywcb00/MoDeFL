@@ -3,13 +3,13 @@ syntax = "proto3";
 service ModelUpdate {
     rpc TransferModelUpdate(ModelUpdateMessage) returns (Ack) {}
     rpc EvaluateModel(ModelWeights) returns (EvaluationMetrics) {}
-    rpc AllowTermination(NetworkID) returns (Ack) {}
+    rpc AllowTermination(NetworkIdentity) returns (Ack) {}
 };
 
 message ModelUpdateMessage {
     ModelWeights weights = 1;
     optional ModelGradient gradient = 2;
-    string ip_and_port = 3;
+    NetworkIdentity identity = 3;
 };
 
 message ModelWeights {
@@ -20,6 +20,10 @@ message ModelGradient {
     repeated bytes gradient = 1;
 };
 
+message NetworkIdentity {
+    string ip_and_port = 1;
+}
+
 message EvaluationMetrics {
     repeated Metric metrics = 1;
 };
@@ -27,10 +31,6 @@ message EvaluationMetrics {
 message Metric {
     string key = 1;
     float value = 2;
-};
-
-message NetworkID {
-    string ip_and_port = 1;
 };
 
 message Ack {

@@ -26,7 +26,7 @@ class IDFLStrategy(ABC):
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
             await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
                 weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized),
-                ip_and_port=self.config["address"]))
+                identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
     async def broadcastWeightsToNeighbors(self, weights_serialized):
         tasks = []
@@ -40,7 +40,7 @@ class IDFLStrategy(ABC):
             await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
                 weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized),
                 gradient=ModelUpdate_pb2.ModelGradient(gradient=gradient_serialized),
-                ip_and_port=self.config["address"]))
+                identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
     async def broadcastWeightsAndGradientsToNeighbors(self, weights_serialized, gradients_serialized):
         tasks = []
@@ -87,7 +87,7 @@ class IDFLStrategy(ABC):
     async def signalTerminationPermissionTo(self, address):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
-            await stub.AllowTermination(ModelUpdate_pb2.NetworkID(
+            await stub.AllowTermination(ModelUpdate_pb2.NetworkIdentity(
                 ip_and_port=self.config["address"]))
 
     async def signalTerminationPermission(self):
