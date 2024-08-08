@@ -51,9 +51,13 @@ def main(argv):
 
     exec_type = None
 
+    config_options = ["lr=", "lr_server=", "lr_client=",
+        "address_file=", "adjacency_file=", "log_dir="]
+
     try:
         opts, args = getopt.getopt(argv[1:], "hiap:",
-            ["help", "initiate", "act", "port=", "addr_file=", "adj_file="])
+            ["help", "initiate", "act", "port=", "addr_file=", "adj_file=",
+                *config_options])
     except getopt.GetoptError:
         print("Wrong usage.")
         printHelp(argv[0])
@@ -72,6 +76,8 @@ def main(argv):
             config["address_file"] = arg
         elif opt in ("--adj_file"):
             config["adjacency_file"] = arg
+        else:
+            config[opt.strip('-')] = arg
 
     match exec_type:
         case ExecType.INITIATOR:
