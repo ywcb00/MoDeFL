@@ -6,7 +6,6 @@ from tffmodel.KerasModel import KerasModel
 
 import asyncio
 import logging
-import numpy as np
 
 class DFLv1Strategy(IDFLStrategy):
     def __init__(self, config, keras_model, dataset):
@@ -21,11 +20,9 @@ class DFLv1Strategy(IDFLStrategy):
             self.model_update_market.put(weights, address)
 
         def evaluateModelCallback(weights_serialized):
-            eval_model = self.keras_model.clone()
             weights = SerializationUtils.deserializeModelWeights(
-                weights_serialized, eval_model.getWeights())
-            eval_model.setWeights(weights)
-            eval_metrics = KerasModel.evaluateKerasModel(eval_model.getModel(), self.dataset.val)
+                weights_serialized, self.keras_model.getWeights())
+            eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 
         self.termination_permission = dict(
@@ -45,7 +42,8 @@ class DFLv1Strategy(IDFLStrategy):
         self.logger.info("Fitting local model.")
         self.previous_weights = self.keras_model.getWeights()
         # TODO: change number of epochs for fit (to 1?)
-        self.keras_model.fit(self.dataset)
+        fit_history = self.keras_model.fit(self.dataset)
+        return fit_history
 
     def broadcast(self):
         current_weights = self.keras_model.getWeights()
@@ -60,17 +58,6 @@ class DFLv1Strategy(IDFLStrategy):
         avg_model_deltas = AggregationUtils.averageModelWeights(list(model_deltas.values()))
         new_weights = current_weights + avg_model_deltas
         self.keras_model.setWeights(new_weights)
-
-    def evaluate(self):
-        weights = self.keras_model.getWeights()
-        weights_serialized = SerializationUtils.serializeModelWeights(weights)
-
-        eval_metrics = asyncio.run(self.evaluateWeightsAllNeighbors(weights_serialized))
-        eval_metrics.append(KerasModel.evaluateKerasModel(
-            self.keras_model.getModel(), self.dataset.val))
-        eval_avg = dict([(key, np.mean([em[key] for em in eval_metrics]))
-            for key in eval_metrics[0].keys()])
-        return eval_avg
 
     def stop(self):
         self.registerTerminationPermission(self.config["address"])

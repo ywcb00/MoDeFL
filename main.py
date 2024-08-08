@@ -31,6 +31,7 @@ config = {
     "num_train_rounds": 1, # TODO: FIXME: this number corresponds to the local training rounds at the moment
 
     "tensorboard_logging": False,
+    "performance_logging": True,
     "log_dir": "./log",
     "log_level": logging.DEBUG,
 }

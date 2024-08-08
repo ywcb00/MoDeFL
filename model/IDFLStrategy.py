@@ -1,10 +1,14 @@
 from model.ModelUpdateMarket import ModelUpdateMarket
+from model.SerializationUtils import SerializationUtils
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 import network.protos.ModelUpdate_pb2_grpc as ModelUpdate_pb2_grpc
+from tffmodel.KerasModel import KerasModel
+from utils.PerformanceLogger import PerformanceLogger
 
 from abc import ABC, abstractmethod
 import asyncio
 import grpc
+import numpy as np
 
 class IDFLStrategy(ABC):
     def __init__(self, config, keras_model, dataset):
@@ -75,9 +79,27 @@ class IDFLStrategy(ABC):
             eval_metrics.append(dict([(elem.key, elem.value) for elem in response]))
         return eval_metrics
 
-    @abstractmethod
+    def evaluateNeighbors(self):
+        weights = self.keras_model.getWeights()
+        weights_serialized = SerializationUtils.serializeModelWeights(weights)
+
+        eval_metrics = asyncio.run(self.evaluateWeightsAllNeighbors(weights_serialized))
+        eval_metrics.append(self.evaluate())
+        eval_avg = dict([(key, np.mean([em[key] for em in eval_metrics]))
+            for key in eval_metrics[0].keys()])
+        return eval_avg
+
+    def evaluateWeights(self, weights):
+        eval_model = self.keras_model.clone()
+        eval_model.setWeights(weights)
+        eval_metrics = KerasModel.evaluateKerasModel(
+            eval_model.getModel(), self.dataset.val)
+        return eval_metrics
+
     def evaluate(self):
-        pass
+        eval_metrics = KerasModel.evaluateKerasModel(
+            self.keras_model.getModel(), self.dataset.val)
+        return eval_metrics
 
     def registerTerminationPermission(self, address):
         self.termination_permission[address] = True
@@ -106,11 +128,26 @@ class IDFLStrategy(ABC):
         # TODO: think about the number of epochs for learning (perhaps termination based on local training loss?)
         for epoch in range(5):
             self.logger.debug(f'Federated epoch #{epoch}')
-            self.fitLocal()
+
+            fit_history = self.fitLocal()
+            if(self.config.setdefault('performance_logging', True)):
+                PerformanceLogger.log(f'{self.config["log_dir"]}/local/train', fit_history.history)
+
+            eval_metrics = self.evaluate()
+            if(self.config.setdefault('performance_logging', True)):
+                PerformanceLogger.log(f'{self.config["log_dir"]}/local/eval', eval_metrics)
+
             self.broadcast()
+
             self.aggregate()
 
-        eval_avg = self.evaluate()
+            eval_avg = self.evaluateNeighbors()
+            if(self.config.setdefault('performance_logging', True)):
+                PerformanceLogger.log(f'{self.config["log_dir"]}/neighbors/eval', eval_avg)
+
+        eval_avg = self.evaluateNeighbors()
         self.logger.info(f'Evaluation with neighbors resulted in an average of {eval_avg}')
 
         self.stop()
+        if(self.config.setdefault('performance_logging', True)):
+            PerformanceLogger.write()

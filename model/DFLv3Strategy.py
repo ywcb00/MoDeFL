@@ -3,11 +3,9 @@ from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
 from tffmodel.Gradient import Gradient
-from tffmodel.KerasModel import KerasModel
 
 import asyncio
 import logging
-import numpy as np
 
 # MEWMA to predict the next gradients based on currently computed gradients and
 #   previously predicted gradients
@@ -48,11 +46,9 @@ class DFLv3Strategy(IDFLStrategy):
             self.model_update_market.put((weights, gradient), address)
 
         def evaluateModelCallback(weights_serialized):
-            eval_model = self.keras_model.clone()
             weights = SerializationUtils.deserializeModelWeights(
-                weights_serialized, eval_model.getWeights())
-            eval_model.setWeights(weights)
-            eval_metrics = KerasModel.evaluateKerasModel(eval_model.getModel(), self.dataset.val)
+                weights_serialized, self.keras_model.getWeights())
+            eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 
         self.termination_permission = dict(
@@ -71,7 +67,8 @@ class DFLv3Strategy(IDFLStrategy):
     def fitLocal(self):
         self.logger.info("Fitting local model.")
         # TODO: change number of epochs for fit (to 1?)
-        self.keras_model.fit(self.dataset)
+        fit_history = self.keras_model.fit(self.dataset)
+        return fit_history
 
     def broadcast(self):
         model_parameters_serialized = SerializationUtils.serializeModelWeights(self.model_parameters)
@@ -101,17 +98,6 @@ class DFLv3Strategy(IDFLStrategy):
             current_weights, received_model_updates, eps_t, alph_t, mu_t, beta_t)
         self.mewma.predict(computed_gradients)
         self.keras_model.setWeights(adjusted_model_parameters)
-
-    def evaluate(self):
-        weights = self.keras_model.getWeights()
-        weights_serialized = SerializationUtils.serializeModelWeights(weights)
-
-        eval_metrics = asyncio.run(self.evaluateWeightsAllNeighbors(weights_serialized))
-        eval_metrics.append(KerasModel.evaluateKerasModel(
-            self.keras_model.getModel(), self.dataset.val))
-        eval_avg = dict([(key, np.mean([em[key] for em in eval_metrics]))
-            for key in eval_metrics[0].keys()])
-        return eval_avg
 
     def stop(self):
         self.registerTerminationPermission(self.config["address"])
