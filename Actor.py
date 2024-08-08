@@ -14,9 +14,9 @@ import tensorflow as tf
 class Actor:
     def __init__(self, config):
         self.config = config
+        self.config["log_dir"] = f'{self.config["log_dir"]}/{self.config["port"]}'
         self.logger = logging.getLogger("Actor")
         self.logger.setLevel(config["log_level"])
-        self.config["log_dir"] = f'{self.config["log_dir"]}/{self.config["port"]}'
 
     def initialize(self):
         def initializeIdentityCallback(addr):

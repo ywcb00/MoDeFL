@@ -30,7 +30,8 @@ config = {
 
     "num_train_rounds": 1, # TODO: FIXME: this number corresponds to the local training rounds at the moment
 
-    "log_dir": "./log/training",
+    "tensorboard_logging": False,
+    "log_dir": "./log",
     "log_level": logging.DEBUG,
 }
 
@@ -50,7 +51,8 @@ def main(argv):
     exec_type = None
 
     try:
-        opts, args = getopt.getopt(argv[1:], "hiap:", ["help", "initiate", "act", "port=", "addr_file=", "adj_file="])
+        opts, args = getopt.getopt(argv[1:], "hiap:",
+            ["help", "initiate", "act", "port=", "addr_file=", "adj_file="])
     except getopt.GetoptError:
         print("Wrong usage.")
         printHelp(argv[0])
