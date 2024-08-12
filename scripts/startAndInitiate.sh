@@ -14,14 +14,14 @@ for arg in "$@"; do
     esac
 done
 
-script_pid=()
+script_pid=""
+trap 'echo "Killing actors and initiator."; kill -SIGTERM ${script_pid}; wait ${script_pid}' SIGINT SIGTERM
 
-$BASEPATH/startLocalActors.sh "$ADDR_FILE" "${PROPAGATE_ARGS[*]}" &
-script_pid+=("$!")
+$BASEPATH/startLocalActors.sh "$ADDR_FILE" ${PROPAGATE_ARGS[*]} &
+script_pid="$!"
 
 sleep 3
 
-$BASEPATH/initiate.sh --addr_file="$ADDR_FILE" --adj_file="$ADJ_FILE" "${PROPAGATE_ARGS[*]}" &
-script_pid+=("$!")
+$BASEPATH/initiate.sh --addr_file="$ADDR_FILE" --adj_file="$ADJ_FILE" ${PROPAGATE_ARGS[*]}
 
-wait ${script_pid[*]}
+wait $script_pid

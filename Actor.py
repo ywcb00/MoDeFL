@@ -6,7 +6,6 @@ from tffdataset.DatasetUtils import DatasetID, getDataset
 from tffdataset.DirectDataset import DirectDataset
 from tffdataset.FedDataset import FedDataset, PartitioningScheme
 from tffmodel.KerasModel import KerasModel
-from tffmodel.ModelBuilderUtils import getFedLearningRates
 
 import logging
 import tensorflow as tf

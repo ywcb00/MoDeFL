@@ -28,6 +28,7 @@ config = {
 
     "learning_type": LearningType.DFLv3,
 
+    "num_epochs": 5,
     "num_train_rounds": 1, # TODO: FIXME: this number corresponds to the local training rounds at the moment
 
     "tensorboard_logging": False,
@@ -52,6 +53,7 @@ def main(argv):
     exec_type = None
 
     config_options = ["lr=", "lr_server=", "lr_client=",
+        "num_epochs=", "num_train_rounds=",
         "address_file=", "adjacency_file=", "log_dir="]
 
     try:

@@ -15,6 +15,4 @@ for arg in "$@"; do
 done
 
 PORT=$(echo $ADDR | cut -d : -f 2)
-python $ROOTPATH/main.py --act --port=$PORT "${PROPAGATE_ARGS[*]}"
-
-exit
+python $ROOTPATH/main.py --act --port=$PORT ${PROPAGATE_ARGS[*]}
