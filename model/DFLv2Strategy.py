@@ -55,7 +55,7 @@ class DFLv2Strategy(IDFLStrategy):
         eps_t = 1 / len(self.config["neighbors"])
         alph_t = dict([(actor_addr, 1) for actor_addr in self.config["neighbors"]])
         current_weights = self.keras_model.getWeights()
-        model_updates = self.model_update_market.getOneFromAll()
+        model_updates = self.model_update_market.get()
         new_weights = AggregationUtils.consensusbasedFedAvg(
             current_weights, model_updates, eps_t, alph_t)
         self.keras_model.setWeights(new_weights)

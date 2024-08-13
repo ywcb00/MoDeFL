@@ -2,6 +2,7 @@
 from Actor import Actor
 from Initiator import Initiator
 from model.LearningStrategy import LearningType
+from model.ModelUpdateMarket import ModelUpdateStrategy
 from tffdataset.DatasetUtils import DatasetID
 from tffdataset.FedDataset import PartitioningScheme
 
@@ -27,6 +28,10 @@ config = {
     "num_threads_server": os.cpu_count(),
 
     "learning_type": LearningType.DFLv3,
+    "model_update_strategy": ModelUpdateStrategy.ONE_FROM_ALL,
+    # "model_update_strat_percentage": 0.5,
+    # "model_update_strat_amount": 2,
+    # "model_update_strat_timeout": 3,
 
     "num_epochs": 5,
     "num_train_rounds": 1, # TODO: FIXME: this number corresponds to the local training rounds at the moment

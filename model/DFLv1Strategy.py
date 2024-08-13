@@ -54,7 +54,7 @@ class DFLv1Strategy(IDFLStrategy):
 
     def aggregate(self):
         current_weights = self.keras_model.getWeights()
-        model_deltas = self.model_update_market.getOneFromAll()
+        model_deltas = self.model_update_market.get()
         avg_model_deltas = AggregationUtils.averageModelWeights(list(model_deltas.values()))
         new_weights = current_weights + avg_model_deltas
         self.keras_model.setWeights(new_weights)

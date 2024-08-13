@@ -5,8 +5,8 @@ library("ggplot2");
 library("ggrepel");
 library("tidyr");
 
-learning_rates = c(0.1, 0.05, 0.02, 0.01);
-ports = c(50505, 50506, 50507, 50508);
+learning_rates = c(0.1, 0.05, 0.02, 0.01, 0.005, 0.002);
+ports = 50504 + 1:13;
 
 custom_palette = c("#7B1FA2", "#F57C00", "#303F9F", "#D01716");
 

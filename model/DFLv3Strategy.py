@@ -92,7 +92,7 @@ class DFLv3Strategy(IDFLStrategy):
         mu_t = 1
         beta_t = dict([(actor_addr, 1 / 15) for actor_addr in self.config["neighbors"]])
         current_weights = self.keras_model.getWeights()
-        received_model_updates = self.model_update_market.getOneFromAll()
+        received_model_updates = self.model_update_market.get()
         computed_gradients = self.computeGradients(received_model_updates)
         self.model_parameters, adjusted_model_parameters = AggregationUtils.consensusbasedFedAvgWithGradExchange(
             current_weights, received_model_updates, eps_t, alph_t, mu_t, beta_t)
