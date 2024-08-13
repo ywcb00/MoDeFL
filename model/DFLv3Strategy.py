@@ -33,7 +33,7 @@ class DFLv3Strategy(IDFLStrategy):
         shape_gradient = self.model_parameters # gradient and weights have the same shape, only used to determine shape
         # TODO: set the hyperparameter a_ma (i.e., moving average magnitude)
         self.mewma = MultivariateExponentiallyWeightedMovingAverage(
-            neighbors=config["neighbors"], shape_gradient=shape_gradient, a_ma=0.75)
+            neighbors=config["neighbors"], shape_gradient=shape_gradient, a_ma=0.99)
         self.logger = logging.getLogger("model/DFLv3Strategy")
         self.logger.setLevel(config["log_level"])
 
@@ -87,10 +87,10 @@ class DFLv3Strategy(IDFLStrategy):
 
     def aggregate(self):
         # TODO: set the hyperparameters eps_t, alph_t, mu_t, and beta_t (i.e., consensus step-size and mixing weights)
-        eps_t = 1 / len(self.config["neighbors"])
-        alph_t = dict([(actor_addr, 1) for actor_addr in self.config["neighbors"]])
-        mu_t = 1 / (25 * len(self.config["neighbors"]))
-        beta_t = dict([(actor_addr, 1) for actor_addr in self.config["neighbors"]])
+        eps_t = 1
+        alph_t = dict([(actor_addr, 1 / len(self.config["neighbors"])) for actor_addr in self.config["neighbors"]])
+        mu_t = 1
+        beta_t = dict([(actor_addr, 1 / 15) for actor_addr in self.config["neighbors"]])
         current_weights = self.keras_model.getWeights()
         received_model_updates = self.model_update_market.getOneFromAll()
         computed_gradients = self.computeGradients(received_model_updates)
