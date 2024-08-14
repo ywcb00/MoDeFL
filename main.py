@@ -58,6 +58,7 @@ def main(argv):
     exec_type = None
 
     config_options = ["lr=", "lr_server=", "lr_client=",
+        "learning_type=", "model_update_strategy=",
         "num_epochs=", "num_train_rounds=",
         "address_file=", "adjacency_file=", "log_dir="]
 
@@ -85,6 +86,11 @@ def main(argv):
             config["adjacency_file"] = arg
         else:
             config[opt.strip('-')] = arg
+
+    if(isinstance(config["learning_type"], str)):
+        config["learning_type"] = LearningType(int(config["learning_type"]))
+    if(isinstance(config["model_update_strategy"], str)):
+        config["model_update_strategy"] = ModelUpdateStrategy(int(config["model_update_strategy"]))
 
     match exec_type:
         case ExecType.INITIATOR:
