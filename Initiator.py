@@ -7,7 +7,7 @@ import network.protos.Initialization_pb2_grpc as Initialization_pb2_grpc
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 from tffdataset.DatasetUtils import getDatasetElementSpec
 from tffmodel.KerasModel import KerasModel
-from tffmodel.ModelBuilderUtils import getFedLearningRates, getModelBuilder
+from tffmodel.ModelBuilderUtils import getFedLearningRateSchedules, getModelBuilder
 from tffmodel.Weights import Weights
 
 import asyncio
@@ -73,7 +73,7 @@ class Initiator:
     async def initialize(self, addresses, adj_mat):
         model = KerasModel.createKerasModelElementSpec(
             getDatasetElementSpec(self.config), self.config)
-        _, local_lr = getFedLearningRates(self.config)
+        _, local_lr = getFedLearningRateSchedules(self.config)
         actor_optimizer = tf.keras.optimizers.SGD(learning_rate=local_lr)
         model_config_serialized, optimizer_config_serialized = SerializationUtils.serializeModel(
             model, actor_optimizer)
