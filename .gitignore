@@ -6,7 +6,7 @@ data/
 log/
 protos/
 .python-version
-scripts/plot/figures
+figures/
 
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python

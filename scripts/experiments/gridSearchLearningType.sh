@@ -13,8 +13,8 @@ $BASEPATH/gridSearchLearningRate.sh --learning_type=$lt --log_dir="$ROOTPATH/log
 
 lt=2
 echo "=== Performing experiment with learning type DFLv$lt. ==="
-$BASEPATH/gridSearchLearningRate.sh --learning_type=$lt --log_dir="$ROOTPATH/log/dflv$lt" --addr_file="$ROOTPATH/resources/actor_addresses.txt" --adj_file="$ROOTPATH/resources/actor_adjacency_dflv2b.txt"
+$BASEPATH/gridSearchLearningRate.sh --learning_type=$lt --log_dir="$ROOTPATH/log/dflv$lt" --addr_file="$ROOTPATH/resources/actor_addresses.txt" --adj_file="$ROOTPATH/resources/actor_adjacency_dflv1.txt"
 
-# lt=3
-# echo "=== Performing experiment with learning type DFLv$lt. ==="
-# $BASEPATH/gridSearchLearningRate.sh --learning_type=$lt --log_dir="$ROOTPATH/log/dflv$lt" --addr_file="$ROOTPATH/resources/actor_addresses_dflv3.txt" --adj_file="$ROOTPATH/resources/actor_adjacency_dflv3.txt"
+lt=3
+echo "=== Performing experiment with learning type DFLv$lt. ==="
+$BASEPATH/gridSearchLearningRate.sh --learning_type=$lt --log_dir="$ROOTPATH/log/dflv$lt" --addr_file="$ROOTPATH/resources/actor_addresses.txt" --adj_file="$ROOTPATH/resources/actor_adjacency_dflv1.txt"

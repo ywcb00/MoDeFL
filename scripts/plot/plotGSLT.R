@@ -6,7 +6,7 @@ library("ggrepel");
 library("tidyr");
 
 num_actors = 4;
-learning_types = paste("dflv", 1:2, sep="");
+learning_types = paste("dflv", 1:3, sep="");
 learning_rates = paste("clr", c(0.1, 0.05, 0.02, 0.01, 0.005, 0.002), sep="");
 ports = as.character(50504 + 1:num_actors);
 collection_types = c("local/train", "local/eval", "neighbors/eval");
@@ -39,9 +39,10 @@ collectStatsDataframe = function(logpath) {
 stats = collectStatsDataframe(paste(ROOTPATH, "log", sep="/"))
 
 custom_palette = c("#7B1FA2", "#F57C00", "#303F9F", "#D01716");
-
+pdf_path = file.path(ROOTPATH, "figures");
+dir.create(pdf_path, showWarnings=FALSE);
 for(lt in levels(stats$learning_type)) {
-  pdf(paste(BASEPATH, "figures", paste(lt, "_gslr_plot.pdf", sep=""), sep="/"));
+  pdf(file.path(pdf_path, paste(lt, "_gslr_plot.pdf", sep="")));
   for(lr in levels(stats$learning_rate)) {
     lr_plt = ggplot(data=stats[stats$learning_type==lt & stats$learning_rate==lr, ], mapping=aes(x=epoch, y=categorical_accuracy)) +
       geom_line(mapping=aes(color=collection_type, lty=port)) +
