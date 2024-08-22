@@ -26,8 +26,16 @@ message Model {
 
 message LearningStrategy {
     int32 learning_type_id = 1;
-}
+    ModelUpdateSpec model_update_spec = 2; // model update strategy specification
+};
+
+message ModelUpdateSpec {
+    int32 model_update_strategy_id = 1; // enum id
+    optional float model_update_strat_percentage = 2; // min percentage of updates from neighbors
+    optional int32 model_update_strat_amount = 3; // min amount of updates
+    optional float model_update_strat_timeout = 4; // timeout for waiting for model updates
+};
 
 message NeighborSpec {
     repeated string ip_and_port = 1;
-}
+};

@@ -1,5 +1,6 @@
 import asyncio
 from enum import Enum
+import math
 from queue import SimpleQueue
 
 class ModelUpdateStrategy(Enum):
@@ -72,7 +73,7 @@ class ModelUpdateMarket:
     # poll until we got one model from at least the specified proportion of neighbors
     def getOneFromAtLeastPercentage(self):
         percentage = self.config.setdefault("model_update_strat_percentage", 0.5)
-        amount = len(self.model_updates) * percentage
+        amount = math.ceil(len(self.model_updates) * percentage)
         result = dict()
         while(len(result) < amount):
             remaining_addresses = set(self.model_updates.keys()).difference(set(result.keys()))

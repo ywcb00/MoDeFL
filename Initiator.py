@@ -46,7 +46,12 @@ class Initiator:
                 weights=init_weights_serialized))
 
             await stub.InitLearningStrategy(Initialization_pb2.LearningStrategy(
-                learning_type_id=self.config["learning_type"].value))
+                learning_type_id=self.config["learning_type"].value,
+                model_update_spec=Initialization_pb2.ModelUpdateSpec(
+                    model_update_strategy_id=self.config["model_update_strategy"].value,
+                    model_update_strat_percentage=self.config.setdefault("model_update_strat_percentage", 0.0),
+                    model_update_strat_amount=self.config.setdefault("model_update_strat_amount", 0),
+                    model_update_strat_timeout=self.config.setdefault("model_update_strat_timeout", 0.0))))
         self.logger.debug(f'Initialized {addr}')
         return
 
@@ -99,9 +104,9 @@ class Initiator:
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
     def initiate(self):
-        actor_addresses = [addr.strip() for addr in open(self.config["address_file"])]
+        actor_addresses = [addr.strip() for addr in open(self.config["addr_file"])]
         self.config["num_actors"] = len(actor_addresses)
-        actor_adjacency = np.fromfile(self.config["adjacency_file"], dtype=int, sep=" ")
+        actor_adjacency = np.fromfile(self.config["adj_file"], dtype=int, sep=" ")
         actor_adjacency = np.reshape(actor_adjacency,
             newshape=(self.config["num_actors"], self.config["num_actors"]))
         asyncio.run(self.initialize(actor_addresses, actor_adjacency))

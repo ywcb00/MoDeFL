@@ -130,14 +130,14 @@ class IDFLStrategy(ABC):
             self.logger.debug(f'Federated epoch #{epoch}')
 
             fit_history = self.fitLocal()
-            if(self.config.setdefault('performance_logging', True)):
+            if(self.config['performance_logging']):
                 metric_keys = list(fit_history.history.keys())
                 # log the result of multiple local epochs in different rows
                 for metric_values in zip(*fit_history.history.values()):
                     PerformanceLogger.log(f'{self.config["log_dir"]}/local/train', dict(zip(metric_keys, metric_values)))
 
             eval_metrics = self.evaluate()
-            if(self.config.setdefault('performance_logging', True)):
+            if(self.config['performance_logging']):
                 PerformanceLogger.log(f'{self.config["log_dir"]}/local/eval', eval_metrics)
 
             self.broadcast()
@@ -145,12 +145,12 @@ class IDFLStrategy(ABC):
             self.aggregate()
 
             eval_avg = self.evaluateNeighbors()
-            if(self.config.setdefault('performance_logging', True)):
+            if(self.config['performance_logging']):
                 PerformanceLogger.log(f'{self.config["log_dir"]}/neighbors/eval', eval_avg)
 
         eval_avg = self.evaluateNeighbors()
         self.logger.info(f'Evaluation with neighbors resulted in an average of {eval_avg}')
 
         self.stop()
-        if(self.config.setdefault('performance_logging', True)):
+        if(self.config['performance_logging']):
             PerformanceLogger.write()

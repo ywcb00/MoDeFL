@@ -1,5 +1,6 @@
 from model.DFLv1Strategy import DFLv1Strategy
 from model.LearningStrategy import LearningStrategy, LearningType
+from model.ModelUpdateMarket import ModelUpdateStrategy
 from model.SerializationUtils import SerializationUtils
 from network.InitializationService import InitializationService
 from tffdataset.DatasetUtils import DatasetID, getDataset
@@ -61,9 +62,17 @@ class Actor:
             self.keras_model.setWeights(init_weights)
             self.logger.debug("Initialized the model weights.")
 
-        def initializeLearningStrategyCallback(learning_type_id):
+        def initializeLearningStrategyCallback(learning_type_id,
+            model_update_strategy_id, model_update_strat_percentage,
+            model_update_strat_amount, model_update_strat_timeout):
             self.config["learning_type"] = LearningType(learning_type_id)
-            self.logger.debug(f'Using learning strategy {self.config["learning_type"].name}')
+            self.config["model_update_strategy"] = ModelUpdateStrategy(model_update_strategy_id)
+            self.config["model_update_strat_percentage"] = model_update_strat_percentage
+            self.config["model_update_strat_amount"] = model_update_strat_amount
+            self.config["model_update_strat_timeout"] = model_update_strat_timeout
+
+            self.logger.debug(f'Using learning strategy {self.config["learning_type"].name} ' +
+                f'and model update strategy {self.config["model_update_strategy"].name}')
 
         def registerNeighborsCallback(neighbors_ip_and_port):
             self.config["neighbors"] = neighbors_ip_and_port

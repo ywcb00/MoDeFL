@@ -1,46 +1,12 @@
 
 from Actor import Actor
 from Initiator import Initiator
-from model.LearningStrategy import LearningType
-from model.ModelUpdateMarket import ModelUpdateStrategy
-from tffdataset.DatasetUtils import DatasetID
-from tffdataset.FedDataset import PartitioningScheme
+from utils.ConfigurationUtils import ConfigurationUtils
 
 from enum import Enum
 import getopt
 import logging
-import os
 import sys
-
-config = {
-    "seed": 13,
-
-    "dataset_id": DatasetID.Mnist,
-
-    "part_scheme": PartitioningScheme.ROUND_ROBIN,
-    # TODO: do we still need to specify the number of workers here or can we obtain them from the network configuration (also on the actor?)
-    # NOTE: we only need the num_workers for creating the correct amount of data partitions
-    "num_workers": 13,
-
-    "address_file": "./resources/actor_addresses.txt",
-    "adjacency_file": "./resources/actor_adjacency.txt",
-
-    "num_threads_server": os.cpu_count(),
-
-    "learning_type": LearningType.DFLv3,
-    "model_update_strategy": ModelUpdateStrategy.ONE_FROM_ALL,
-    # "model_update_strat_percentage": 0.5,
-    # "model_update_strat_amount": 2,
-    # "model_update_strat_timeout": 3,
-
-    "num_epochs": 5,
-    "num_train_rounds": 1, # TODO: FIXME: this number corresponds to the local training rounds at the moment
-
-    "tensorboard_logging": False,
-    "performance_logging": True,
-    "log_dir": "./log",
-    "log_level": logging.DEBUG,
-}
 
 class ExecType(Enum):
     INITIATOR = 1,
@@ -51,21 +17,19 @@ def printHelp(program_name):
     print("Actor usage:", program_name, "--act", "--port=<PORT>")
 
 def main(argv):
+    # default config if not specified otherwise
+    config = ConfigurationUtils.DEFAULT_CONFIG
+
+    exec_type = None
+
     logging.basicConfig()
     logger = logging.getLogger("main.py")
     logger.setLevel(config["log_level"])
 
-    exec_type = None
-
-    config_options = ["lr=", "lr_server=", "lr_client=",
-        "learning_type=", "model_update_strategy=",
-        "num_epochs=", "num_train_rounds=",
-        "address_file=", "adjacency_file=", "log_dir="]
-
     try:
-        opts, args = getopt.getopt(argv[1:], "hiap:",
-            ["help", "initiate", "act", "port=", "addr_file=", "adj_file=",
-                *config_options])
+        opts, args = getopt.getopt(argv[1:], "hiap:c:",
+            ["help", "initiate", "act", "port=", "config=", "addr_file=", "adj_file=",
+                *ConfigurationUtils.CLI_OPTIONS])
     except getopt.GetoptError:
         print("Wrong usage.")
         printHelp(argv[0])
@@ -74,23 +38,20 @@ def main(argv):
         if opt in ("-h", "--help"):
             printHelp(argv[0])
             sys.exit()
+        elif opt in ("-c", "--config"):
+            logger.info(f'Loading configuration from {arg}.')
+            config.update(ConfigurationUtils.loadConfig(arg))
+    for opt, arg in opts:
         if opt in ("-i", "--initiate"):
             exec_type = ExecType.INITIATOR
         elif opt in ("-a", "--act"):
             exec_type = ExecType.ACTOR
-        elif opt in("-p", "--port"):
-            config["port"] = arg
-        elif opt in ("--addr_file"):
-            config["address_file"] = arg
-        elif opt in ("--adj_file"):
-            config["adjacency_file"] = arg
         else:
-            config[opt.strip('-')] = arg
+            config = ConfigurationUtils.parseCLIOption(config, opt, arg)
 
-    if(isinstance(config["learning_type"], str)):
-        config["learning_type"] = LearningType(int(config["learning_type"]))
-    if(isinstance(config["model_update_strategy"], str)):
-        config["model_update_strategy"] = ModelUpdateStrategy(int(config["model_update_strategy"]))
+    logger.setLevel(config["log_level"])
+
+    config = ConfigurationUtils.convertConfigTypes(config)
 
     match exec_type:
         case ExecType.INITIATOR:

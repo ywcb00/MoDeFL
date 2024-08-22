@@ -29,7 +29,11 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
         return ModelUpdate_pb2.Ack()
 
     def InitLearningStrategy(self, request, context):
-        self.callbacks["InitLearningStrategy"](request.learning_type_id)
+        self.callbacks["InitLearningStrategy"](request.learning_type_id,
+            request.model_update_spec.model_update_strategy_id,
+            request.model_update_spec.model_update_strat_percentage,
+            request.model_update_spec.model_update_strat_amount,
+            request.model_update_spec.model_update_strat_timeout)
         return ModelUpdate_pb2.Ack()
 
     def RegisterNeighbors(self, request, context):
