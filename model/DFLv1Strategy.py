@@ -14,10 +14,10 @@ class DFLv1Strategy(IDFLStrategy):
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
-        def transferModelUpdateCallback(weights_serialized, _, address):
+        def transferModelUpdateCallback(weights_serialized, aggregation_weight, _, address):
             weights = SerializationUtils.deserializeModelWeights(
                 weights_serialized, self.keras_model.getWeights())
-            self.model_update_market.put(weights, address)
+            self.model_update_market.put((weights, aggregation_weight), address)
 
         def evaluateModelCallback(weights_serialized):
             weights = SerializationUtils.deserializeModelWeights(
@@ -50,13 +50,17 @@ class DFLv1Strategy(IDFLStrategy):
         model_delta = current_weights - self.previous_weights
         model_delta_serialized = SerializationUtils.serializeModelWeights(model_delta)
 
-        asyncio.run(self.broadcastWeightsToNeighbors(model_delta_serialized))
+        asyncio.run(self.broadcastWeightsToNeighbors(model_delta_serialized,
+            self.dataset.train.cardinality().numpy()))
 
     def aggregate(self):
-        current_weights = self.keras_model.getWeights()
-        model_deltas = self.model_update_market.get()
-        avg_model_deltas = AggregationUtils.averageModelWeights(list(model_deltas.values()))
-        new_weights = current_weights + avg_model_deltas
+        current_model_delta = self.keras_model.getWeights() - self.previous_weights
+        model_deltas_and_weight = self.model_update_market.get()
+        model_deltas, aggregation_weights = zip(*list(model_deltas_and_weight.values()))
+        model_deltas = [current_model_delta, *model_deltas]
+        aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
+        avg_model_deltas = AggregationUtils.averageModelWeights(model_deltas, aggregation_weights)
+        new_weights = self.previous_weights + avg_model_deltas
         self.keras_model.setWeights(new_weights)
 
     def stop(self):

@@ -25,32 +25,37 @@ class IDFLStrategy(ABC):
     def fitLocal(self):
         pass
 
-    async def broadcastWeightsTo(self, weights_serialized, address):
+    async def broadcastWeightsTo(self, weights_serialized, address, aggregation_weight=0):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
             await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
-                weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized),
+                weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized,
+                    aggregation_weight=aggregation_weight),
                 identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
-    async def broadcastWeightsToNeighbors(self, weights_serialized):
+    async def broadcastWeightsToNeighbors(self, weights_serialized, aggregation_weight=0):
         tasks = []
         for addr in self.config["neighbors"]:
-            tasks.append(asyncio.create_task(self.broadcastWeightsTo(weights_serialized, addr)))
+            tasks.append(asyncio.create_task(self.broadcastWeightsTo(weights_serialized,
+                addr, aggregation_weight)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
-    async def broadcastWeightsAndGradientTo(self, weights_serialized, gradient_serialized, address):
+    async def broadcastWeightsAndGradientTo(self, weights_serialized,
+        gradient_serialized, address, aggregation_weight=0):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
             await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
-                weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized),
+                weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized,
+                    aggregation_weight=aggregation_weight),
                 gradient=ModelUpdate_pb2.ModelGradient(gradient=gradient_serialized),
                 identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
-    async def broadcastWeightsAndGradientsToNeighbors(self, weights_serialized, gradients_serialized):
+    async def broadcastWeightsAndGradientsToNeighbors(self, weights_serialized,
+        gradients_serialized, aggregation_weight=0):
         tasks = []
         for addr in self.config["neighbors"]:
             tasks.append(asyncio.create_task(self.broadcastWeightsAndGradientTo(
-                weights_serialized, gradients_serialized[addr], addr)))
+                weights_serialized, gradients_serialized[addr], addr, aggregation_weight)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
     @abstractmethod

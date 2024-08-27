@@ -14,7 +14,7 @@ class DFLv2Strategy(IDFLStrategy):
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
-        def transferModelUpdateCallback(weights_serialized, _, address):
+        def transferModelUpdateCallback(weights_serialized, aggregation_weight, _, address):
             weights = SerializationUtils.deserializeModelWeights(
                 weights_serialized, self.keras_model.getWeights())
             self.model_update_market.put(weights, address)

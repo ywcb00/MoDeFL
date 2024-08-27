@@ -14,6 +14,7 @@ message ModelUpdateMessage {
 
 message ModelWeights {
     repeated bytes weights = 1;
+    optional float aggregation_weight = 2;
 };
 
 message ModelGradient {

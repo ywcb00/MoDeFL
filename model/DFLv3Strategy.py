@@ -38,7 +38,8 @@ class DFLv3Strategy(IDFLStrategy):
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
-        def transferModelUpdateCallback(weights_serialized, gradient_serialized, address):
+        def transferModelUpdateCallback(weights_serialized, aggregation_weight,
+            gradient_serialized, address):
             weights = SerializationUtils.deserializeModelWeights(
                 weights_serialized, self.keras_model.getWeights())
             gradient = SerializationUtils.deserializeGradient(

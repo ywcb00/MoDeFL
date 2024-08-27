@@ -12,7 +12,8 @@ class Servicer(ModelUpdate_pb2_grpc.ModelUpdateServicer):
 
     def TransferModelUpdate(self, request, context):
         self.callbacks["TransferModelUpdate"](request.weights.weights,
-            request.gradient.gradient, request.identity.ip_and_port)
+            request.weights.aggregation_weight, request.gradient.gradient,
+            request.identity.ip_and_port)
         return ModelUpdate_pb2.Ack()
 
     def EvaluateModel(self, request, context):

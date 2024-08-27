@@ -3,8 +3,8 @@ import numpy as np
 
 class AggregationUtils:
     @classmethod
-    def averageModelWeights(self_class, model_weights):
-        result = np.average(model_weights)
+    def averageModelWeights(self_class, model_weights, averaging_weights=None):
+        result = np.average(model_weights, weights=averaging_weights)
         return result
 
     @classmethod
