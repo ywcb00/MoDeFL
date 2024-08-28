@@ -1,6 +1,7 @@
 from model.DFLv1Strategy import DFLv1Strategy
 from model.DFLv2Strategy import DFLv2Strategy
 from model.DFLv3Strategy import DFLv3Strategy
+from model.DFLv4Strategy import DFLv4Strategy
 
 from enum import Enum
 
@@ -8,6 +9,7 @@ class LearningType(Enum):
     DFLv1 = 1
     DFLv2 = 2
     DFLv3 = 3
+    DFLv4 = 4
 
 class LearningStrategy:
     @classmethod
@@ -19,5 +21,7 @@ class LearningStrategy:
                 return DFLv2Strategy(config, keras_model, dataset)
             case LearningType.DFLv3:
                 return DFLv3Strategy(config, keras_model, dataset)
+            case LearningType.DFLv4:
+                return DFLv4Strategy(config, keras_model, dataset)
             case _:
                 raise NotImplementedError
