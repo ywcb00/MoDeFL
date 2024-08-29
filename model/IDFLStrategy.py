@@ -149,12 +149,15 @@ class IDFLStrategy(ABC):
         for epoch in range(int(self.config["num_epochs"])):
             self.logger.debug(f'Federated epoch #{epoch}')
 
-            fit_history = self.fitLocal()
-            if(self.config['performance_logging'] and fit_history):
-                metric_keys = list(fit_history.history.keys())
-                # log the result of multiple local epochs in different rows
-                for metric_values in zip(*fit_history.history.values()):
-                    PerformanceLogger.log(f'{self.config["log_dir"]}/local/train', dict(zip(metric_keys, metric_values)))
+            train_metrics = self.fitLocal()
+            if(self.config['performance_logging'] and train_metrics):
+                metric_keys = list(train_metrics.keys())
+                if(isinstance(list(train_metrics.values())[0], list)):
+                    # log the result of multiple local epochs in different rows
+                    for metric_values in zip(*train_metrics.values()):
+                        PerformanceLogger.log(f'{self.config["log_dir"]}/local/train', dict(zip(metric_keys, metric_values)))
+                else:
+                    PerformanceLogger.log(f'{self.config["log_dir"]}/local/train', dict(zip(metric_keys, list(train_metrics.values()))))
 
             eval_metrics = self.evaluate()
             if(self.config['performance_logging']):

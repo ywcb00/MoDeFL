@@ -91,7 +91,8 @@ class Initiator:
             tasks.append(asyncio.create_task(self.initializeActor(addr,
                 model_config_serialized, optimizer_config_serialized, init_weights_serialized)))
             neighbor_addresses = NetworkUtils.getNeighborAddresses(addr, addresses, adj_mat)
-            assert (self.config["learning_type"] != LearningType.DFLv1 or
+            assert (not self.config["learning_type"] in
+                        [LearningType.DFLv1, LearningType.DFLv4, LearningType.DFLv5, LearningType.DFLv6] or
                     len(neighbor_addresses)+1 == self.config["num_actors"]
                 ), "DFLv1 requires a fully connected actor network."
             tasks.append(asyncio.create_task(self.registerNeighbors(addr, neighbor_addresses)))

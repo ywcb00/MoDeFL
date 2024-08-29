@@ -42,7 +42,8 @@ class DFLv2Strategy(IDFLStrategy):
         self.logger.info("Fitting local model.")
         # TODO: change number of epochs for fit (to 1?)
         fit_history = self.keras_model.fit(self.dataset)
-        return fit_history
+        train_metrics = fit_history.history
+        return train_metrics
 
     def broadcast(self):
         weights = self.keras_model.getWeights()

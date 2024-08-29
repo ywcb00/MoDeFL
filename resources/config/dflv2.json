@@ -1,0 +1,23 @@
+{
+    "seed": 13,
+
+    "dataset_id": 2,
+
+    "part_scheme": 3,
+    "num_workers": 4,
+
+    "num_threads_server": 8,
+
+    "learning_type": 2,
+    "model_update_strategy": 1,
+
+    "num_epochs": 5,
+    "num_train_rounds": 1,
+
+    "lr_client": 0.02,
+
+    "tensorboard_logging": 0,
+    "performance_logging": 1,
+    "log_dir": "./log/dflv2",
+    "log_level": 10
+}

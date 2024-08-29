@@ -2,6 +2,7 @@ from model.AggregationUtils import AggregationUtils
 from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
+from tffmodel.KerasModel import KerasModel
 
 import asyncio
 import logging
@@ -42,12 +43,19 @@ class DFLv5Strategy(IDFLStrategy):
     def fitLocal(self):
         self.logger.info("Fitting local model.")
 
-        # TODO: compute and return metrics from fitting and return for the performance logger
-        fit_history = None
+        train_metrics = None
 
         self.computed_gradient = self.keras_model.computeGradient(self.dataset)
 
-        return fit_history
+        # NOTE: metrics are about the local gradient applied to the current model weights
+        if(self.config['performance_logging']):
+            eval_model = self.keras_model.clone()
+            eval_model.setWeights(self.keras_model.getWeights() -
+                (self.computed_gradient * self.config["lr_client"]))
+            train_metrics = KerasModel.evaluateKerasModel(
+                eval_model.getModel(), self.dataset.train)
+
+        return train_metrics
 
     def broadcast(self):
         gradient_serialized = SerializationUtils.serializeGradient(self.computed_gradient)

@@ -69,7 +69,8 @@ class DFLv3Strategy(IDFLStrategy):
         self.logger.info("Fitting local model.")
         # TODO: change number of epochs for fit (to 1?)
         fit_history = self.keras_model.fit(self.dataset)
-        return fit_history
+        train_metrics = fit_history.history
+        return train_metrics
 
     def broadcast(self):
         model_parameters_serialized = SerializationUtils.serializeModelWeights(self.model_parameters)
@@ -90,7 +91,7 @@ class DFLv3Strategy(IDFLStrategy):
         # TODO: set the hyperparameters eps_t, alph_t, mu_t, and beta_t (i.e., consensus step-size and mixing weights)
         eps_t = 1
         alph_t = dict([(actor_addr, 1 / len(self.config["neighbors"])) for actor_addr in self.config["neighbors"]])
-        mu_t = 1
+        mu_t = 0.005
         beta_t = dict([(actor_addr, 1 / 15) for actor_addr in self.config["neighbors"]])
         current_weights = self.keras_model.getWeights()
         received_model_updates = self.model_update_market.get()

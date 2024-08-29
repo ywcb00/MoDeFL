@@ -38,5 +38,5 @@ class DFLv4Strategy(DFLv1Strategy):
         self.logger.debug(f'Added {len(regularizers)} regularizers to the model.')
 
         # TODO: change number of epochs for fit (to 1?)
-        fit_history = super().fitLocal()
-        return fit_history
+        train_metrics = super().fitLocal()
+        return train_metrics
