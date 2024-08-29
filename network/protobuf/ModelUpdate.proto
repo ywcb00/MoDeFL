@@ -7,9 +7,10 @@ service ModelUpdate {
 };
 
 message ModelUpdateMessage {
-    ModelWeights weights = 1;
-    optional ModelGradient gradient = 2;
-    NetworkIdentity identity = 3;
+    optional ModelWeights weights = 1;
+    optional float aggregation_weight = 2;
+    optional ModelGradient gradient = 3;
+    NetworkIdentity identity = 4;
 };
 
 message ModelWeights {

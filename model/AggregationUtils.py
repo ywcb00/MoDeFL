@@ -25,3 +25,21 @@ class AggregationUtils:
             amp_update_term = pg * mu_t * beta_t[addr]
             adjusted_model_parameters += mp_update_term - amp_update_term
         return model_parameters, adjusted_model_parameters
+
+    # NOTE: only a single gradient per device supported yet
+    #   Hence, the model gradients are a list of gradients, not a list of a list of gradients.
+    #   Thus, also the a_values are a list of values, not a list of vectors.
+    @classmethod
+    def fedNova(self_class, current_model_weights, model_gradients, aggregation_weights,
+        tau_eff, lr_client, a_values):
+        normalized_gradients = [mg * (av / abs(av)) for mg, av in zip(model_gradients, a_values)]
+        model_update_term = None
+        aw_sum = np.sum(aggregation_weights)
+        for ng, aw in zip(normalized_gradients, aggregation_weights):
+            if(model_update_term == None):
+                model_update_term = ng * (aw / aw_sum)
+            else:
+                model_update_term += ng * (aw / aw_sum)
+        model_update_term *= tau_eff * lr_client
+        result = current_model_weights - model_update_term
+        return result

@@ -29,8 +29,8 @@ class IDFLStrategy(ABC):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
             await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
-                weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized,
-                    aggregation_weight=aggregation_weight),
+                weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized),
+                aggregation_weight=aggregation_weight,
                 identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
     async def broadcastWeightsToNeighbors(self, weights_serialized, aggregation_weight=0):
@@ -45,8 +45,8 @@ class IDFLStrategy(ABC):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
             await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
-                weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized,
-                    aggregation_weight=aggregation_weight),
+                weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized),
+                aggregation_weight=aggregation_weight,
                 gradient=ModelUpdate_pb2.ModelGradient(gradient=gradient_serialized),
                 identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
@@ -56,6 +56,21 @@ class IDFLStrategy(ABC):
         for addr in self.config["neighbors"]:
             tasks.append(asyncio.create_task(self.broadcastWeightsAndGradientTo(
                 weights_serialized, gradients_serialized[addr], addr, aggregation_weight)))
+        await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
+
+    async def broadcastGradientTo(self, gradient_serialized, address, aggregation_weight=0):
+        async with grpc.aio.insecure_channel(address) as channel:
+            stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
+            await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
+                aggregation_weight=aggregation_weight,
+                gradient=ModelUpdate_pb2.ModelGradient(gradient=gradient_serialized),
+                identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
+
+    async def broadcastGradientToNeighbors(self, gradient_serialized, aggregation_weight=0):
+        tasks = []
+        for addr in self.config["neighbors"]:
+            tasks.append(asyncio.create_task(self.broadcastGradientTo(
+                gradient_serialized, addr, aggregation_weight)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
     @abstractmethod
@@ -135,7 +150,7 @@ class IDFLStrategy(ABC):
             self.logger.debug(f'Federated epoch #{epoch}')
 
             fit_history = self.fitLocal()
-            if(self.config['performance_logging']):
+            if(self.config['performance_logging'] and fit_history):
                 metric_keys = list(fit_history.history.keys())
                 # log the result of multiple local epochs in different rows
                 for metric_values in zip(*fit_history.history.values()):
