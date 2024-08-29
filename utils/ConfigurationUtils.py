@@ -47,6 +47,8 @@ class ConfigurationUtils:
     def loadConfig(self_class, config_path):
         with open(config_path) as cf:
             config_dict = json.loads(cf.read())
+        assert (not "adj_file" in config_dict.keys() and not "addr_file" in config_dict.keys()
+            ), "Specifying the address file and adjacency file through the config file is not working."
         return config_dict
 
     @classmethod

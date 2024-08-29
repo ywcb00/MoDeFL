@@ -2,22 +2,23 @@ from model.AggregationUtils import AggregationUtils
 from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
+from tffmodel.KerasModel import KerasModel
 
 import asyncio
 import logging
-import numpy as np
 
-class DFLv5Strategy(IDFLStrategy):
+# FedAvg using gradients
+class DFLv6Strategy(IDFLStrategy):
     def __init__(self, config, keras_model, dataset):
         super().__init__(config, keras_model, dataset)
-        self.logger = logging.getLogger("model/DFLv5Strategy")
+        self.logger = logging.getLogger("model/DFLv6Strategy")
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
         def transferModelUpdateCallback(_weights_serialized, aggregation_weight,
             gradient_serialized, address):
             gradient = SerializationUtils.deserializeGradient(
-                gradient_serialized, self.keras_model.getWeights()) # use model parameters to derive gradient shape
+                gradient_serialized, self.keras_model.getWeights()) # use model weights to derive gradient shape
             self.model_update_market.put((gradient, aggregation_weight), address)
 
         def evaluateModelCallback(weights_serialized):
@@ -55,18 +56,13 @@ class DFLv5Strategy(IDFLStrategy):
             self.dataset.train.cardinality().numpy()))
 
     def aggregate(self):
-        current_weights = self.keras_model.getWeights()
+        current_model_weights = self.keras_model.getWeights()
         model_gradients_and_weight = self.model_update_market.get()
         model_gradients, aggregation_weights = zip(*list(model_gradients_and_weight.values()))
         model_gradients = [self.computed_gradient, *model_gradients]
         aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
-
-        # TODO: set the hyperparameters a_values (or a_vectors) and tau_eff
-        a_values = np.ones(len(model_gradients))
-        tau_eff = 1
-
-        new_weights = AggregationUtils.fedNova(current_weights, model_gradients,
-            aggregation_weights, tau_eff, self.config["lr_client"], a_values)
+        avg_model_gradient = AggregationUtils.averageModelWeights(model_gradients, aggregation_weights)
+        new_weights = current_model_weights - (avg_model_gradient * self.config["lr_client"])
         self.keras_model.setWeights(new_weights)
 
     def stop(self):
