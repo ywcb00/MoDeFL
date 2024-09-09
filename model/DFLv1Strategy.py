@@ -15,13 +15,11 @@ class DFLv1Strategy(IDFLStrategy):
 
     def startServer(self):
         def transferModelUpdateCallback(weights_serialized, aggregation_weight, _, address):
-            weights = SerializationUtils.deserializeModelWeights(
-                weights_serialized, self.keras_model.getWeights())
+            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
             self.model_update_market.put((weights, aggregation_weight), address)
 
         def evaluateModelCallback(weights_serialized):
-            weights = SerializationUtils.deserializeModelWeights(
-                weights_serialized, self.keras_model.getWeights())
+            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
             eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 

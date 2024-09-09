@@ -17,13 +17,11 @@ class DFLv5Strategy(IDFLStrategy):
     def startServer(self):
         def transferModelUpdateCallback(_weights_serialized, aggregation_weight,
             gradient_serialized, address):
-            gradient = SerializationUtils.deserializeGradient(
-                gradient_serialized, self.keras_model.getWeights()) # use model parameters to derive gradient shape
+            gradient = SerializationUtils.deserializeGradient(gradient_serialized)
             self.model_update_market.put((gradient, aggregation_weight), address)
 
         def evaluateModelCallback(weights_serialized):
-            weights = SerializationUtils.deserializeModelWeights(
-                weights_serialized, self.keras_model.getWeights())
+            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
             eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 

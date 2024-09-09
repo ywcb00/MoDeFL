@@ -1,5 +1,6 @@
-from tffmodel.Gradient import Gradient
-from tffmodel.Weights import Weights
+from tffmodel.types.Gradient import Gradient
+from tffmodel.types.SparseGradient import SparseGradient
+from tffmodel.types.Weights import Weights
 
 import numpy as np
 import pickle
@@ -8,32 +9,27 @@ import tensorflow as tf
 class SerializationUtils:
     @classmethod
     def serializeModelWeights(self_class, weights):
-        # NOTE: we transfer the weights as float32 albeit they could be float64
-        # TODO: find a more efficient way to serialize the weights object
-        serialized_weights = [np.float32(layer_weights).tobytes() for layer_weights in weights.get()]
-        return serialized_weights
+        return weights.serialize()
 
     @classmethod
-    # NOTE: param source weights is used to identify the respective types and shapes
-    def deserializeModelWeights(self_class, weights_serialized, shape_weights):
-        weights = [np.frombuffer(layer_weights, dtype=np.float32)
-                .reshape(shape_weights[idx].shape)
-            for idx, layer_weights in enumerate(weights_serialized)]
-        return Weights(weights)
+    def deserializeModelWeights(self_class, weights_serialized):
+        return Weights.deserialize(weights_serialized)
 
     @classmethod
     def serializeGradient(self_class, gradient):
-        # NOTE: we transfer the gradient as float32 albeit it is float64
-        # TODO: find a more efficient way to serialize the weights object
-        serialized_gradient = [np.float32(layer_gradient).tobytes() for layer_gradient in gradient.get()]
-        return serialized_gradient
+        return gradient.serialize()
 
     @classmethod
-    def deserializeGradient(self_class, gradient_serialized, shape_gradient):
-        gradient = [np.frombuffer(layer_gradient, dtype=np.float32)
-                .reshape(shape_gradient[idx].shape)
-            for idx, layer_gradient in enumerate(gradient_serialized)]
-        return Gradient(gradient)
+    def deserializeGradient(self_class, gradient_serialized):
+        return Gradient.deserialize(gradient_serialized)
+
+    @classmethod
+    def serializeSparseGradient(self_class, sparse_gradient):
+        return sparse_gradient.serialize()
+
+    @classmethod
+    def deserializeSparseGradient(self_class, sparse_gradient_serialized):
+        return SparseGradient.deserialize(sparse_gradient_serialized)
 
     @classmethod
     def serializeModel(self_class, model, optimizer):

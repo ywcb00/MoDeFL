@@ -2,7 +2,7 @@ from model.AggregationUtils import AggregationUtils
 from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
-from tffmodel.Gradient import Gradient
+from tffmodel.types.Gradient import Gradient
 
 import asyncio
 import logging
@@ -40,15 +40,12 @@ class DFLv3Strategy(IDFLStrategy):
     def startServer(self):
         def transferModelUpdateCallback(weights_serialized, aggregation_weight,
             gradient_serialized, address):
-            weights = SerializationUtils.deserializeModelWeights(
-                weights_serialized, self.keras_model.getWeights())
-            gradient = SerializationUtils.deserializeGradient(
-                gradient_serialized, next(iter(self.mewma.get().values())))
+            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
+            gradient = SerializationUtils.deserializeGradient(gradient_serialized)
             self.model_update_market.put((weights, gradient), address)
 
         def evaluateModelCallback(weights_serialized):
-            weights = SerializationUtils.deserializeModelWeights(
-                weights_serialized, self.keras_model.getWeights())
+            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
             eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 

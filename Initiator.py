@@ -8,7 +8,7 @@ import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 from tffdataset.DatasetUtils import getDatasetElementSpec
 from tffmodel.KerasModel import KerasModel
 from tffmodel.ModelBuilderUtils import getFedLearningRateSchedules, getModelBuilder
-from tffmodel.Weights import Weights
+from tffmodel.types.Weights import Weights
 
 import asyncio
 import grpc
