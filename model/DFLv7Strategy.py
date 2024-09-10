@@ -8,11 +8,8 @@ from tffmodel.types.SparseGradient import SparseGradient
 import asyncio
 import logging
 
-# FedAvg w/ layer-wise top-k Gradient Sparsification
+# FedAvg w/ Gradient Sparsification
 class DFLv7Strategy(IDFLStrategy):
-    # TODO: set hyperparameter K_SPARSITY
-    K_SPARSITY = 100
-
     def __init__(self, config, keras_model, dataset):
         super().__init__(config, keras_model, dataset)
         self.logger = logging.getLogger("model/DFLv7Strategy")
@@ -61,8 +58,9 @@ class DFLv7Strategy(IDFLStrategy):
         return train_metrics
 
     def broadcast(self):
-        sparse_gradient = SparseGradient.sparsifyLayerwiseTopK(
-            self.computed_gradient, self.K_SPARSITY)
+        # TODO: set the hyperparameters for sparsification
+        sparse_gradient = SparseGradient.sparsifyGradient(
+            self.computed_gradient, self.config)
         sparse_gradient_serialized = SerializationUtils.serializeSparseGradient(sparse_gradient)
         asyncio.run(self.broadcastGradientToNeighbors(sparse_gradient_serialized,
             self.dataset.train.cardinality().numpy()))
@@ -71,8 +69,8 @@ class DFLv7Strategy(IDFLStrategy):
         current_model_weights = self.keras_model.getWeights()
         model_gradients_and_weight = self.model_update_market.get()
         model_gradients, aggregation_weights = zip(*list(model_gradients_and_weight.values()))
-        model_gradients = [SparseGradient.sparsifyLayerwiseTopK(
-            self.computed_gradient, self.K_SPARSITY), *model_gradients]
+        model_gradients = [SparseGradient.sparsifyGradient(
+            self.computed_gradient, self.config), *model_gradients]
         aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
         avg_model_gradient = AggregationUtils.averageModelWeights(model_gradients, aggregation_weights)
         new_weights = current_model_weights - (avg_model_gradient * self.config["lr_client"])

@@ -2,6 +2,7 @@ from model.LearningStrategy import LearningType
 from model.ModelUpdateMarket import ModelUpdateStrategy
 from tffdataset.DatasetUtils import DatasetID
 from tffdataset.FedDataset import PartitioningScheme
+from tffmodel.types.SparseGradient import SparsificationType
 
 import json
 import logging
@@ -28,6 +29,10 @@ class ConfigurationUtils:
         "model_update_strat_percentage": 0.5,
         "model_update_strat_amount": 2,
         "model_update_strat_timeout": 3,
+
+        "sparsification_type": SparsificationType.LAYERWISE_TOPK,
+        "sparse_k": 100,
+        "sparse_perc": 0.2,
 
         "num_epochs": 5,
         "num_train_rounds": 1, # TODO: FIXME: this number corresponds to the local training rounds at the moment
@@ -74,6 +79,7 @@ class ConfigurationUtils:
         config["part_scheme"] = convertEnum(config["part_scheme"], PartitioningScheme)
         config["learning_type"] = convertEnum(config["learning_type"], LearningType)
         config["model_update_strategy"] = convertEnum(config["model_update_strategy"], ModelUpdateStrategy)
+        config["sparsification_type"] = convertEnum(config["sparsification_type"], SparsificationType)
 
         def convertBool(value):
             if(isinstance(value, str)):

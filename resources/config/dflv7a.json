@@ -11,6 +11,9 @@
     "learning_type": 7,
     "model_update_strategy": 1,
 
+    "sparsification_type": 1,
+    "sparse_k": 100,
+
     "num_epochs": 5,
     "num_train_rounds": 1,
 
@@ -18,6 +21,6 @@
 
     "tensorboard_logging": 0,
     "performance_logging": 1,
-    "log_dir": "./log/dflv7",
+    "log_dir": "./log/dflv7a",
     "log_level": 10
 }
