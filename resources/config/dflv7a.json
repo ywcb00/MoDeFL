@@ -14,10 +14,11 @@
     "sparsification_type": 1,
     "sparse_k": 100,
 
-    "num_epochs": 5,
-    "num_train_rounds": 1,
+    "num_fed_epochs": 5,
+    "num_epochs": 2,
 
-    "lr_client": 0.009,
+    "lr_client": 0.007,
+    "lr_server": 0.03,
 
     "tensorboard_logging": 0,
     "performance_logging": 1,

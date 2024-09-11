@@ -14,8 +14,8 @@
     "model_update_strat_amount": 2,
     "model_update_strat_timeout": 3,
 
-    "num_epochs": 5,
-    "num_train_rounds": 1,
+    "num_fed_epochs": 5,
+    "num_epochs": 1,
 
     "tensorboard_logging": 0,
     "performance_logging": 1,

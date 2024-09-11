@@ -40,20 +40,12 @@ class DFLv7Strategy(IDFLStrategy):
         self.model_update_service.startServer(callbacks)
 
     def fitLocal(self):
-        self.logger.info("Fitting local model.")
+        self.logger.info(f'Fitting local model for {self.config["num_epochs"]} local epochs.')
 
-        # TODO: compute and return metrics from fitting and return for the performance logger
         train_metrics = None
+        self.previous_weights = self.keras_model.getWeights()
 
-        self.computed_gradient = self.keras_model.computeGradient(self.dataset)
-
-        # NOTE: metrics are about the local gradient applied to the current model weights
-        if(self.config['performance_logging']):
-            eval_model = self.keras_model.clone()
-            eval_model.setWeights(self.keras_model.getWeights() -
-                (self.computed_gradient * self.config["lr_client"]))
-            train_metrics = KerasModel.evaluateKerasModel(
-                eval_model.getModel(), self.dataset.train)
+        self.computed_gradient, train_metrics = self.keras_model.fitGradient(self.dataset)
 
         return train_metrics
 
@@ -66,14 +58,13 @@ class DFLv7Strategy(IDFLStrategy):
             self.dataset.train.cardinality().numpy()))
 
     def aggregate(self):
-        current_model_weights = self.keras_model.getWeights()
         model_gradients_and_weight = self.model_update_market.get()
         model_gradients, aggregation_weights = zip(*list(model_gradients_and_weight.values()))
         model_gradients = [SparseGradient.sparsifyGradient(
             self.computed_gradient, self.config), *model_gradients]
         aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
         avg_model_gradient = AggregationUtils.averageModelWeights(model_gradients, aggregation_weights)
-        new_weights = current_model_weights - (avg_model_gradient * self.config["lr_client"])
+        new_weights = self.previous_weights - (avg_model_gradient * self.config["lr_server"])
         self.keras_model.setWeights(new_weights)
 
     def stop(self):

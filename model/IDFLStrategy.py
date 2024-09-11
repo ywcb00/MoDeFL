@@ -146,7 +146,7 @@ class IDFLStrategy(ABC):
         self.startServer()
 
         # TODO: think about the number of epochs for learning (perhaps termination based on local training loss?)
-        for epoch in range(int(self.config["num_epochs"])):
+        for epoch in range(int(self.config["num_fed_epochs"])):
             self.logger.debug(f'Federated epoch #{epoch}')
 
             train_metrics = self.fitLocal()

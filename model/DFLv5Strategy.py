@@ -39,19 +39,10 @@ class DFLv5Strategy(IDFLStrategy):
         self.model_update_service.startServer(callbacks)
 
     def fitLocal(self):
-        self.logger.info("Fitting local model.")
+        self.logger.info(f'Fitting local model for {self.config["num_epochs"]} local epochs.')
 
-        train_metrics = None
-
-        self.computed_gradient = self.keras_model.computeGradient(self.dataset)
-
-        # NOTE: metrics are about the local gradient applied to the current model weights
-        if(self.config['performance_logging']):
-            eval_model = self.keras_model.clone()
-            eval_model.setWeights(self.keras_model.getWeights() -
-                (self.computed_gradient * self.config["lr_client"]))
-            train_metrics = KerasModel.evaluateKerasModel(
-                eval_model.getModel(), self.dataset.train)
+        self.previous_weights = self.keras_model.getWeights()
+        self.computed_gradient, train_metrics = self.keras_model.fitGradient(self.dataset)
 
         return train_metrics
 
@@ -61,7 +52,6 @@ class DFLv5Strategy(IDFLStrategy):
             self.dataset.train.cardinality().numpy()))
 
     def aggregate(self):
-        current_weights = self.keras_model.getWeights()
         model_gradients_and_weight = self.model_update_market.get()
         model_gradients, aggregation_weights = zip(*list(model_gradients_and_weight.values()))
         model_gradients = [self.computed_gradient, *model_gradients]
@@ -71,8 +61,8 @@ class DFLv5Strategy(IDFLStrategy):
         a_values = np.ones(len(model_gradients))
         tau_eff = 1
 
-        new_weights = AggregationUtils.fedNova(current_weights, model_gradients,
-            aggregation_weights, tau_eff, self.config["lr_client"], a_values)
+        new_weights = AggregationUtils.fedNova(self.previous_weights, model_gradients,
+            aggregation_weights, tau_eff, self.config["lr_server"], a_values)
         self.keras_model.setWeights(new_weights)
 
     def stop(self):

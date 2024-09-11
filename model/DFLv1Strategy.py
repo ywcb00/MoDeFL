@@ -37,9 +37,8 @@ class DFLv1Strategy(IDFLStrategy):
         self.model_update_service.startServer(callbacks)
 
     def fitLocal(self):
-        self.logger.info("Fitting local model.")
+        self.logger.info(f'Fitting local model for {self.config["num_epochs"]} local epochs.')
         self.previous_weights = self.keras_model.getWeights()
-        # TODO: change number of epochs for fit (to 1?)
         fit_history = self.keras_model.fit(self.dataset)
         train_metrics = fit_history.history
         return train_metrics

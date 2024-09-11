@@ -34,8 +34,8 @@ class ConfigurationUtils:
         "sparse_k": 100,
         "sparse_perc": 0.2,
 
-        "num_epochs": 5,
-        "num_train_rounds": 1, # TODO: FIXME: this number corresponds to the local training rounds at the moment
+        "num_fed_epochs": 5,
+        "num_epochs": 1, # TODO: FIXME: this number corresponds to the local training rounds at the moment
 
         "tensorboard_logging": False,
         "performance_logging": True,
@@ -105,7 +105,7 @@ class ConfigurationUtils:
                 raise RuntimeError(f'Cannot convert type {type(value)} to int.')
             return value
         int_type_configs = ["seed", "num_workers", "num_threads_server",
-            "model_update_strat_amount", "num_epochs", "num_train_rounds", "log_level"]
+            "model_update_strat_amount", "num_fed_epochs", "num_epochs", "log_level"]
         for itc in int_type_configs:
             if(itc in config.keys()):
                 config[itc] = convertInt(config[itc])

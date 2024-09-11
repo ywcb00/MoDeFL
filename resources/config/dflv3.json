@@ -11,8 +11,8 @@
     "learning_type": 3,
     "model_update_strategy": 1,
 
-    "num_epochs": 5,
-    "num_train_rounds": 1,
+    "num_fed_epochs": 5,
+    "num_epochs": 2,
 
     "lr_client": 0.005,
 
