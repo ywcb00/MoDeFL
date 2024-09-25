@@ -3,7 +3,7 @@ syntax = "proto3";
 import "network/protos/ModelUpdate.proto";
 
 service Initialize {
-    rpc InitIdentity(NetworkIdentity) returns (Ack) {};
+    rpc InitIdentity(Identity) returns (Ack) {};
     rpc InitDataset(Dataset) returns (Ack) {};
     rpc InitModel(Model) returns (Ack) {};
     rpc InitModelWeights(ModelWeights) returns (Ack) {};
@@ -11,6 +11,11 @@ service Initialize {
     rpc RegisterNeighbors(NeighborSpec) returns (Ack) {};
     rpc StartLearning(Ack) returns (Ack) {};
 };
+
+message Identity {
+    NetworkIdentity net_id = 1;
+    int32 num_actors = 2;
+}
 
 message Dataset {
     int32 dataset_id = 1; // enum id
@@ -37,5 +42,5 @@ message ModelUpdateSpec {
 };
 
 message NeighborSpec {
-    repeated string ip_and_port = 1;
+    repeated NetworkIdentity net_id = 1;
 };

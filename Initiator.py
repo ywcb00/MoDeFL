@@ -25,13 +25,16 @@ class Initiator:
         self.logger = logging.getLogger("Initiator")
         self.logger.setLevel(config["log_level"])
 
-    async def initializeActor(self, addr, model_config_serialized,
+    async def initializeActor(self, addr, actor_idx, num_actors, model_config_serialized,
         optimizer_config_serialized, init_weights_serialized):
         self.logger.debug(f'Connecting to {addr}')
         async with grpc.aio.insecure_channel(addr) as channel:
             stub = Initialization_pb2_grpc.InitializeStub(channel)
 
-            await stub.InitIdentity(ModelUpdate_pb2.NetworkIdentity(ip_and_port=addr))
+            await stub.InitIdentity(Initialization_pb2.Identity(
+                net_id=ModelUpdate_pb2.NetworkIdentity(
+                    ip_and_port=addr, actor_idx=actor_idx),
+                num_actors=num_actors))
 
             await stub.InitDataset(Initialization_pb2.Dataset(
                 dataset_id=self.config["dataset_id"].value,
@@ -55,12 +58,13 @@ class Initiator:
         self.logger.debug(f'Initialized {addr}')
         return
 
-    async def registerNeighbors(self, addr, neighbor_addresses):
+    async def registerNeighbors(self, addr, identities):
         self.logger.debug(f'Connecting to {addr}')
         async with grpc.aio.insecure_channel(addr) as channel:
             stub = Initialization_pb2_grpc.InitializeStub(channel)
             await stub.RegisterNeighbors(
-                Initialization_pb2.NeighborSpec(ip_and_port=neighbor_addresses))
+                Initialization_pb2.NeighborSpec(net_id=[ModelUpdate_pb2.NetworkIdentity(
+                    ip_and_port=addr, actor_idx=aidx) for aidx, addr in identities.items()]))
         self.logger.debug(f'Registered neighbors of {addr}')
         return
 
@@ -87,15 +91,15 @@ class Initiator:
         init_weights_serialized = SerializationUtils.serializeModelWeights(init_weights)
 
         tasks = []
-        for addr in addresses:
-            tasks.append(asyncio.create_task(self.initializeActor(addr,
+        for actor_idx, addr in enumerate(addresses):
+            tasks.append(asyncio.create_task(self.initializeActor(addr, actor_idx, len(addresses),
                 model_config_serialized, optimizer_config_serialized, init_weights_serialized)))
-            neighbor_addresses = NetworkUtils.getNeighborAddresses(addr, addresses, adj_mat)
+            neighbor_identities = NetworkUtils.getNeighborIdentities(addr, addresses, adj_mat)
             assert (not self.config["learning_type"] in
                         [LearningType.DFLv1, LearningType.DFLv4, LearningType.DFLv5, LearningType.DFLv6] or
-                    len(neighbor_addresses)+1 == self.config["num_actors"]
+                    len(neighbor_identities)+1 == self.config["num_actors"]
                 ), "DFLv1 requires a fully connected actor network."
-            tasks.append(asyncio.create_task(self.registerNeighbors(addr, neighbor_addresses)))
+            tasks.append(asyncio.create_task(self.registerNeighbors(addr, neighbor_identities)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
     async def startLearning(self, addresses):

@@ -19,10 +19,12 @@ class Actor:
         self.logger.setLevel(config["log_level"])
 
     def initialize(self):
-        def initializeIdentityCallback(addr):
+        def initializeIdentityCallback(addr, actor_idx, num_actors):
             self.config["address"] = addr
+            self.config["actor_idx"] = actor_idx
+            self.config["num_actors"] = num_actors
 
-            self.logger.debug(f'Initialized own identity as {addr}.')
+            self.logger.debug(f'Initialized own identity as {addr} with idx {actor_idx}/{num_actors}.')
 
         def initializeDatasetCallback(dataset_id, part_scheme_id, part_index, seed):
             self.config["dataset_id"] = DatasetID(dataset_id)
@@ -73,9 +75,10 @@ class Actor:
             self.logger.debug(f'Using learning strategy {self.config["learning_type"].name} ' +
                 f'and model update strategy {self.config["model_update_strategy"].name}')
 
-        def registerNeighborsCallback(neighbors_ip_and_port):
-            self.config["neighbors"] = neighbors_ip_and_port
-            self.logger.debug(f'Registered {len(self.config["neighbors"])} neighbors')
+        def registerNeighborsCallback(neighbors_net_id):
+            self.config["neighbors"] = list(neighbors_net_id.keys())
+            self.config["neighbor_idx"] = list(neighbors_net_id.values())
+            self.logger.debug(f'Registered {len(self.config["neighbors"])} neighbors.')
 
         callbacks = {"InitIdentity": initializeIdentityCallback,
             "InitDataset": initializeDatasetCallback,

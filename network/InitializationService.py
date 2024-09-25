@@ -12,7 +12,8 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
         self.callbacks = callbacks
 
     def InitIdentity(self, request, context):
-        self.callbacks["InitIdentity"](request.ip_and_port)
+        self.callbacks["InitIdentity"](request.net_id.ip_and_port,
+            request.net_id.actor_idx, request.num_actors)
         return ModelUpdate_pb2.Ack()
 
     def InitDataset(self, request, context):
@@ -37,7 +38,8 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
         return ModelUpdate_pb2.Ack()
 
     def RegisterNeighbors(self, request, context):
-        self.callbacks["RegisterNeighbors"](request.ip_and_port)
+        self.callbacks["RegisterNeighbors"](
+            {nid.ip_and_port: nid.actor_idx for nid in request.net_id})
         return ModelUpdate_pb2.Ack()
 
     def StartLearning(self, request, context):
