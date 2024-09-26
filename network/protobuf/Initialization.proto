@@ -14,7 +14,7 @@ service Initialize {
 
 message Identity {
     NetworkIdentity net_id = 1;
-    int32 num_actors = 2;
+    int32 num_workers = 2;
 }
 
 message Dataset {

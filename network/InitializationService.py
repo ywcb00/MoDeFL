@@ -13,7 +13,7 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
 
     def InitIdentity(self, request, context):
         self.callbacks["InitIdentity"](request.net_id.ip_and_port,
-            request.net_id.actor_idx, request.num_actors)
+            request.net_id.actor_idx, request.num_workers)
         return ModelUpdate_pb2.Ack()
 
     def InitDataset(self, request, context):

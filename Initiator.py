@@ -34,7 +34,7 @@ class Initiator:
             await stub.InitIdentity(Initialization_pb2.Identity(
                 net_id=ModelUpdate_pb2.NetworkIdentity(
                     ip_and_port=addr, actor_idx=actor_idx),
-                num_actors=num_actors))
+                num_workers=num_actors))
 
             await stub.InitDataset(Initialization_pb2.Dataset(
                 dataset_id=self.config["dataset_id"].value,
@@ -97,7 +97,7 @@ class Initiator:
             neighbor_identities = NetworkUtils.getNeighborIdentities(addr, addresses, adj_mat)
             assert (not self.config["learning_type"] in
                         [LearningType.DFLv1, LearningType.DFLv4, LearningType.DFLv5, LearningType.DFLv6] or
-                    len(neighbor_identities)+1 == self.config["num_actors"]
+                    len(neighbor_identities)+1 == self.config["num_workers"]
                 ), "DFLv1 requires a fully connected actor network."
             tasks.append(asyncio.create_task(self.registerNeighbors(addr, neighbor_identities)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
@@ -110,10 +110,10 @@ class Initiator:
 
     def initiate(self):
         actor_addresses = [addr.strip() for addr in open(self.config["addr_file"])]
-        self.config["num_actors"] = len(actor_addresses)
+        self.config["num_workers"] = len(actor_addresses)
         actor_adjacency = np.fromfile(self.config["adj_file"], dtype=int, sep=" ")
         actor_adjacency = np.reshape(actor_adjacency,
-            newshape=(self.config["num_actors"], self.config["num_actors"]))
+            newshape=(self.config["num_workers"], self.config["num_workers"]))
         asyncio.run(self.initialize(actor_addresses, actor_adjacency))
         asyncio.run(self.startLearning(actor_addresses))
         self.logger.info("Initiation completed.")

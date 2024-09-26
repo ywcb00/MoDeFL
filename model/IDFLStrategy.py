@@ -40,6 +40,14 @@ class IDFLStrategy(ABC):
                 addr, aggregation_weight)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
+    async def broadcastWeightPartitions(self, weights_partitioned_serialized,
+        aggregation_weight=0):
+        tasks = list()
+        for addr, weights_serialized in weights_partitioned_serialized.items():
+            tasks.append(asyncio.create_task(self.broadcastWeightsTo(weights_serialized,
+                addr, aggregation_weight)))
+        await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
+
     async def broadcastWeightsAndGradientTo(self, weights_serialized,
         gradient_serialized, address, aggregation_weight=0):
         async with grpc.aio.insecure_channel(address) as channel:

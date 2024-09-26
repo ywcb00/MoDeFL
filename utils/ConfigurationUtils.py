@@ -15,9 +15,7 @@ class ConfigurationUtils:
         "dataset_id": DatasetID.Mnist,
 
         "part_scheme": PartitioningScheme.ROUND_ROBIN,
-        # TODO: do we still need to specify the number of workers here or can we obtain them from the network configuration (also on the actor?)
-        # NOTE: we only need the num_workers for creating the correct amount of data partitions
-        "num_workers": 4,
+        "num_workers": 4, # i.e., number of actors in DFL
 
         "addr_file": "./resources/actor_addresses.txt",
         "adj_file": "./resources/actor_adjacency.txt",

@@ -22,7 +22,7 @@ class Actor:
         def initializeIdentityCallback(addr, actor_idx, num_actors):
             self.config["address"] = addr
             self.config["actor_idx"] = actor_idx
-            self.config["num_actors"] = num_actors
+            self.config["num_workers"] = num_actors
 
             self.logger.debug(f'Initialized own identity as {addr} with idx {actor_idx}/{num_actors}.')
 
