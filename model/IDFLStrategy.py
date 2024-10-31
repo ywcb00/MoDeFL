@@ -3,6 +3,7 @@ from model.SerializationUtils import SerializationUtils
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 import network.protos.ModelUpdate_pb2_grpc as ModelUpdate_pb2_grpc
 from tffmodel.KerasModel import KerasModel
+from utils.CommunicationLogger import CommunicationLogger
 from utils.PerformanceLogger import PerformanceLogger
 
 from abc import ABC, abstractmethod
@@ -185,3 +186,5 @@ class IDFLStrategy(ABC):
         self.stop()
         if(self.config['performance_logging']):
             PerformanceLogger.write()
+        if(self.config['communication_logging']):
+            CommunicationLogger.write(f'{self.config["log_dir"]}/network/communication')

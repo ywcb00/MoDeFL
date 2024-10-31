@@ -18,6 +18,7 @@
 
     "tensorboard_logging": 0,
     "performance_logging": 1,
+    "communication_logging": 1,
     "log_dir": "./log/dflv1",
     "log_level": 10
 }

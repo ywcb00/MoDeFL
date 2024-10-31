@@ -3,6 +3,7 @@ from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
 from tffmodel.KerasModel import KerasModel
+from utils.CommunicationLogger import CommunicationLogger
 
 import asyncio
 import logging
@@ -45,6 +46,10 @@ class DFLv2Strategy(IDFLStrategy):
     def broadcast(self):
         weights = self.keras_model.getWeights()
         weights_serialized = SerializationUtils.serializeModelWeights(weights)
+
+        if(self.config["communication_logging"]):
+            CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
+                {"size": weights.getSize(), "dtype": weights.getDTypeName()})
 
         asyncio.run(self.broadcastWeightsToNeighbors(weights_serialized))
 

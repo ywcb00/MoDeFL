@@ -6,6 +6,7 @@ from network.ModelUpdateService import ModelUpdateService
 from tffmodel.KerasModel import KerasModel
 from tffmodel.types.Weights import Weights
 from utils.PartitioningUtils import PartitioningUtils
+from utils.CommunicationLogger import CommunicationLogger
 
 import asyncio
 import logging
@@ -52,10 +53,15 @@ class DFLv8Strategy(DFLv1Strategy):
         model_delta = current_weights - self.previous_weights
 
         model_delta_partitioned = PartitioningUtils.partitionModelParameters(model_delta, self.config)
-        model_delta_partitioned = {addr: SerializationUtils.serializeModelWeights(weights)
+        model_delta_partitioned_serialized = {addr: SerializationUtils.serializeModelWeights(weights)
             for addr, weights in model_delta_partitioned.items()}
 
-        asyncio.run(self.broadcastWeightPartitions(model_delta_partitioned,
+        if(self.config["communication_logging"]):
+            for addr, weights in model_delta_partitioned.items():
+                CommunicationLogger.log(self.config["address"], addr,
+                    {"size": weights.getSize(), "dtype": weights.getDTypeName()})
+
+        asyncio.run(self.broadcastWeightPartitions(model_delta_partitioned_serialized,
             self.dataset.train.cardinality().numpy()))
 
     def aggregateWeightPartitions(self):
@@ -72,6 +78,11 @@ class DFLv8Strategy(DFLv1Strategy):
     def broadcastGlobalWeightPartition(self):
         global_partition_serialized = SerializationUtils.serializeModelWeights(
             self.global_weight_partition)
+
+        if(self.config["communication_logging"]):
+            CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
+                {"size": self.global_weight_partition.getSize(), "dtype": self.global_weight_partition.getDTypeName()})
+
         asyncio.run(self.broadcastWeightsToNeighbors(global_partition_serialized,
             aggregation_weight=GLOBAL_PARTITION_FLAG))
 

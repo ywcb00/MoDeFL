@@ -37,6 +37,7 @@ class ConfigurationUtils:
 
         "tensorboard_logging": False,
         "performance_logging": True,
+        "communication_logging": True,
         "log_dir": "./log",
         "log_level": logging.DEBUG,
     }
@@ -89,7 +90,7 @@ class ConfigurationUtils:
             else:
                 raise RuntimeError(f'Cannot convert type {type(value)} to bool.')
             return value
-        bool_type_configs = ["tensorboard_logging", "performance_logging"]
+        bool_type_configs = ["tensorboard_logging", "performance_logging", "communication_logging"]
         for btc in bool_type_configs:
             if(btc in config.keys()):
                 config[btc] = convertBool(config[btc])

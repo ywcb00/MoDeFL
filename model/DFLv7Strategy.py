@@ -4,6 +4,7 @@ from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
 from tffmodel.KerasModel import KerasModel
 from tffmodel.types.SparseGradient import SparseGradient
+from utils.CommunicationLogger import CommunicationLogger
 
 import asyncio
 import logging
@@ -54,6 +55,11 @@ class DFLv7Strategy(IDFLStrategy):
         sparse_gradient = SparseGradient.sparsifyGradient(
             self.computed_gradient, self.config)
         sparse_gradient_serialized = SerializationUtils.serializeSparseGradient(sparse_gradient)
+
+        if(self.config["communication_logging"]):
+            CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
+                {"size": sparse_gradient.getSize(), "dtype": sparse_gradient.getDTypeName()})
+
         asyncio.run(self.broadcastGradientToNeighbors(sparse_gradient_serialized,
             self.dataset.train.cardinality().numpy()))
 
