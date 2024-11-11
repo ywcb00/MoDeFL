@@ -87,19 +87,15 @@ class DFLv8Strategy(DFLv1Strategy):
             aggregation_weight=GLOBAL_PARTITION_FLAG))
 
     def setLocalWeights(self):
-        new_weights = Weights.getZero(self.keras_model.getWeights())
         actor_idx_lookup_dict = dict(zip(self.config["neighbors"], self.config["neighbor_idx"]))
         model_partitions = self.model_partition_market.getOneFromAll()
+
         # re-construct weight matrix from partitions
-        # local actor's partition
-        for counter, part_idx in enumerate(PartitioningUtils.getPartitionIndices(
-            new_weights.getLength(), self.config["actor_idx"], self.config["num_workers"])):
-            new_weights.setLayer(part_idx, self.global_weight_partition[counter])
-        # other actors' partitions
-        for addr, weight_partition in model_partitions.items():
-            for counter, part_idx in enumerate(PartitioningUtils.getPartitionIndices(
-                new_weights.getLength(), actor_idx_lookup_dict[addr], self.config["num_workers"])):
-                new_weights.setLayer(part_idx, weight_partition[counter])
+        partition_dict = {actor_idx_lookup_dict[addr]: part for addr, part in model_partitions.items()}
+        partition_dict[self.config["actor_idx"]] = self.global_weight_partition
+        flattened_parameters = PartitioningUtils.joinParameterPartitions(partition_dict)
+        new_weights = Weights.fromFlattened(flattened_parameters, self.keras_model.getWeights())
+
         self.keras_model.setWeights(new_weights)
 
     def aggregate(self):
