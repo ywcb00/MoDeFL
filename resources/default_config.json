@@ -9,10 +9,10 @@
     "num_threads_server": 8,
 
     "learning_type": 3,
-    "model_update_strategy": 1,
-    "model_update_strat_percentage": 0.5,
-    "model_update_strat_amount": 2,
-    "model_update_strat_timeout": 3,
+    "synchronization_strategy": 1,
+    "synchronization_strat_percentage": 0.5,
+    "synchronization_strat_amount": 2,
+    "synchronization_strat_timeout": 3,
 
     "num_fed_epochs": 5,
     "num_epochs": 1,

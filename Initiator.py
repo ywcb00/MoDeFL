@@ -51,10 +51,10 @@ class Initiator:
             await stub.InitLearningStrategy(Initialization_pb2.LearningStrategy(
                 learning_type_id=self.config["learning_type"].value,
                 model_update_spec=Initialization_pb2.ModelUpdateSpec(
-                    model_update_strategy_id=self.config["model_update_strategy"].value,
-                    model_update_strat_percentage=self.config.setdefault("model_update_strat_percentage", 0.0),
-                    model_update_strat_amount=self.config.setdefault("model_update_strat_amount", 0),
-                    model_update_strat_timeout=self.config.setdefault("model_update_strat_timeout", 0.0))))
+                    synchronization_strategy_id=self.config["synchronization_strategy"].value,
+                    synchronization_strat_percentage=self.config.setdefault("synchronization_strat_percentage", 0.0),
+                    synchronization_strat_amount=self.config.setdefault("synchronization_strat_amount", 0),
+                    synchronization_strat_timeout=self.config.setdefault("synchronization_strat_timeout", 0.0))))
         self.logger.debug(f'Initialized {addr}')
         return
 

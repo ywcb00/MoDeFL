@@ -1,6 +1,6 @@
 from model.DFLv1Strategy import DFLv1Strategy
 from model.LearningStrategy import LearningStrategy, LearningType
-from model.ModelUpdateMarket import ModelUpdateStrategy
+from model.ModelUpdateMarket import SynchronizationStrategy
 from model.SerializationUtils import SerializationUtils
 from network.InitializationService import InitializationService
 from tffdataset.DatasetUtils import DatasetID, getDataset
@@ -64,16 +64,16 @@ class Actor:
             self.logger.debug("Initialized the model weights.")
 
         def initializeLearningStrategyCallback(learning_type_id,
-            model_update_strategy_id, model_update_strat_percentage,
-            model_update_strat_amount, model_update_strat_timeout):
+            synchronization_strategy_id, synchronization_strat_percentage,
+            synchronization_strat_amount, synchronization_strat_timeout):
             self.config["learning_type"] = LearningType(learning_type_id)
-            self.config["model_update_strategy"] = ModelUpdateStrategy(model_update_strategy_id)
-            self.config["model_update_strat_percentage"] = model_update_strat_percentage
-            self.config["model_update_strat_amount"] = model_update_strat_amount
-            self.config["model_update_strat_timeout"] = model_update_strat_timeout
+            self.config["synchronization_strategy"] = SynchronizationStrategy(synchronization_strategy_id)
+            self.config["synchronization_strat_percentage"] = synchronization_strat_percentage
+            self.config["synchronization_strat_amount"] = synchronization_strat_amount
+            self.config["synchronization_strat_timeout"] = synchronization_strat_timeout
 
             self.logger.debug(f'Using learning strategy {self.config["learning_type"].name} ' +
-                f'and model update strategy {self.config["model_update_strategy"].name}')
+                f'and model update strategy {self.config["synchronization_strategy"].name}')
 
         def registerNeighborsCallback(neighbors_net_id):
             self.config["neighbors"] = list(neighbors_net_id.keys())

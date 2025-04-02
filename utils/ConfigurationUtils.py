@@ -1,5 +1,5 @@
 from model.LearningStrategy import LearningType
-from model.ModelUpdateMarket import ModelUpdateStrategy
+from model.ModelUpdateMarket import SynchronizationStrategy
 from tffdataset.DatasetUtils import DatasetID
 from tffdataset.FedDataset import PartitioningScheme
 from tffmodel.types.SparseGradient import SparsificationType
@@ -23,10 +23,10 @@ class ConfigurationUtils:
         "num_threads_server": os.cpu_count(),
 
         "learning_type": LearningType.DFLv3,
-        "model_update_strategy": ModelUpdateStrategy.ONE_FROM_ALL,
-        "model_update_strat_percentage": 0.5,
-        "model_update_strat_amount": 2,
-        "model_update_strat_timeout": 3,
+        "synchronization_strategy": SynchronizationStrategy.ONE_FROM_EACH,
+        "synchronization_strat_percentage": 0.5,
+        "synchronization_strat_amount": 2,
+        "synchronization_strat_timeout": 3,
 
         "sparsification_type": SparsificationType.LAYERWISE_TOPK,
         "sparse_k": 100,
@@ -77,7 +77,7 @@ class ConfigurationUtils:
         config["dataset_id"] = convertEnum(config["dataset_id"], DatasetID)
         config["part_scheme"] = convertEnum(config["part_scheme"], PartitioningScheme)
         config["learning_type"] = convertEnum(config["learning_type"], LearningType)
-        config["model_update_strategy"] = convertEnum(config["model_update_strategy"], ModelUpdateStrategy)
+        config["synchronization_strategy"] = convertEnum(config["synchronization_strategy"], SynchronizationStrategy)
         config["sparsification_type"] = convertEnum(config["sparsification_type"], SparsificationType)
 
         def convertBool(value):
@@ -104,7 +104,7 @@ class ConfigurationUtils:
                 raise RuntimeError(f'Cannot convert type {type(value)} to int.')
             return value
         int_type_configs = ["seed", "num_workers", "num_threads_server",
-            "model_update_strat_amount", "num_fed_epochs", "num_epochs", "log_level"]
+            "synchronization_strat_amount", "num_fed_epochs", "num_epochs", "log_level"]
         for itc in int_type_configs:
             if(itc in config.keys()):
                 config[itc] = convertInt(config[itc])
@@ -117,7 +117,7 @@ class ConfigurationUtils:
             else:
                 raise RuntimeError(f'Cannot convert type {type(value)} to float.')
             return value
-        float_type_configs = ["model_update_strat_percentage", "model_update_strat_timeout",
+        float_type_configs = ["synchronization_strat_percentage", "synchronization_strat_timeout",
             "lr", "lr_server", "lr_client"]
         for ftc in float_type_configs:
             if(ftc in config.keys()):

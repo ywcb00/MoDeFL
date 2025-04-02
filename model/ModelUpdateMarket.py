@@ -3,34 +3,34 @@ from enum import Enum
 import math
 from queue import SimpleQueue
 
-class ModelUpdateStrategy(Enum):
-    ONE_FROM_ALL = 1
+class SynchronizationStrategy(Enum):
+    ONE_FROM_EACH = 1
     AVAILABLE = 2
-    MIN_ONE_FROM_ALL = 3
+    MIN_ONE_FROM_EACH = 3
     ONE_FROM_MIN_PERCENT = 4
-    MIN_N = 5
-    ONE_FROM_ALL_T = 6
+    MIN_K = 5
+    ONE_FROM_EACH_T = 6
 
 class ModelUpdateMarket:
     def __init__(self, config):
         self.config = config
-        self.config.setdefault("model_update_strategy", ModelUpdateStrategy.ONE_FROM_ALL)
+        self.config.setdefault("synchronization_strategy", SynchronizationStrategy.ONE_FROM_EACH)
         self.model_updates = dict(
             [(addr, SimpleQueue()) for addr in config["neighbors"]])
 
     def get(self):
-        match self.config["model_update_strategy"]:
-            case ModelUpdateStrategy.ONE_FROM_ALL:
+        match self.config["synchronization_strategy"]:
+            case SynchronizationStrategy.ONE_FROM_EACH:
                 return self.getOneFromAll()
-            case ModelUpdateStrategy.AVAILABLE:
+            case SynchronizationStrategy.AVAILABLE:
                 return self.getAvailable()
-            case ModelUpdateStrategy.MIN_ONE_FROM_ALL:
+            case SynchronizationStrategy.MIN_ONE_FROM_EACH:
                 return self.getAtLeastOneFromAll()
-            case ModelUpdateStrategy.ONE_FROM_MIN_PERCENT:
+            case SynchronizationStrategy.ONE_FROM_MIN_PERCENT:
                 return self.getOneFromAtLeastPercentage()
-            case ModelUpdateStrategy.MIN_N:
+            case SynchronizationStrategy.MIN_K:
                 return self.getAtLeastK()
-            case ModelUpdateStrategy.ONE_FROM_ALL_T:
+            case SynchronizationStrategy.ONE_FROM_EACH_T:
                 return self.getOneFromAllTimeout()
             case _:
                 raise NotImplementedError
@@ -72,7 +72,7 @@ class ModelUpdateMarket:
 
     # poll until we got one model from at least the specified proportion of neighbors
     def getOneFromAtLeastPercentage(self):
-        percentage = self.config.setdefault("model_update_strat_percentage", 0.5)
+        percentage = self.config.setdefault("synchronization_strat_percentage", 0.5)
         amount = math.ceil(len(self.model_updates) * percentage)
         result = dict()
         while(len(result) < amount):
@@ -87,7 +87,7 @@ class ModelUpdateMarket:
 
     # poll until we got at least the specified amount of model updates
     def getAtLeastK(self):
-        amount = self.config.setdefault("model_update_strat_amount", len(self.model_updates) // 2)
+        amount = self.config.setdefault("synchronization_strat_amount", len(self.model_updates) // 2)
         result = dict()
         while(amount > 0):
             for addr, queue in self.model_updates.items():
@@ -100,7 +100,7 @@ class ModelUpdateMarket:
 
     # try to get one from each neighbor until we reach the specified timeout (seconds)
     def getOneFromAllTimeout(self, timeout):
-        timeout = self.config.setdefault("model_update_strat_timeout", 3)
+        timeout = self.config.setdefault("synchronization_strat_timeout", 3)
         async def getOneTimeout(addr, queue, timeout):
             try:
                 mod_update = (addr, queue.get(block=True, timeout=timeout))

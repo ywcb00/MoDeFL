@@ -9,7 +9,7 @@
     "num_threads_server": 8,
 
     "learning_type": 6,
-    "model_update_strategy": 1,
+    "synchronization_strategy": 1,
 
     "num_fed_epochs": 5,
     "num_epochs": 2,
