@@ -38,7 +38,7 @@ class Initiator:
 
             await stub.InitDataset(Initialization_pb2.Dataset(
                 dataset_id=self.config["dataset_id"].value,
-                partition_scheme_id=self.config["part_scheme"].value,
+                partition_scheme_id=self.config["partitioning_scheme"].value,
                 partition_index=next(self.actor_idx),
                 seed=self.config["seed"]))
 

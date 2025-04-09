@@ -26,9 +26,9 @@ class Actor:
 
             self.logger.debug(f'Initialized own identity as {addr} with idx {actor_idx}/{num_actors}.')
 
-        def initializeDatasetCallback(dataset_id, part_scheme_id, part_index, seed):
+        def initializeDatasetCallback(dataset_id, partitioning_scheme_id, part_index, seed):
             self.config["dataset_id"] = DatasetID(dataset_id)
-            self.config["part_scheme"] = PartitioningScheme(part_scheme_id)
+            self.config["partitioning_scheme"] = PartitioningScheme(partitioning_scheme_id)
             self.config["part_index"] = part_index
             self.config["seed"] = seed
 

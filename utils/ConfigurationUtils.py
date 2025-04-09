@@ -14,8 +14,11 @@ class ConfigurationUtils:
 
         "dataset_id": DatasetID.Mnist,
 
-        "part_scheme": PartitioningScheme.ROUND_ROBIN,
+        "partitioning_scheme": PartitioningScheme.ROUND_ROBIN,
+
         "num_workers": 4, # i.e., number of actors in DFL
+        "num_fed_epochs": 5,
+        "num_local_epochs": 1,
 
         "addr_file": "./resources/actor_addresses.txt",
         "adj_file": "./resources/actor_adjacency.txt",
@@ -23,21 +26,19 @@ class ConfigurationUtils:
         "num_threads_server": os.cpu_count(),
 
         "learning_type": LearningType.DFLv3,
+
         "synchronization_strategy": SynchronizationStrategy.ONE_FROM_EACH,
         "synchronization_strat_percentage": 0.5,
         "synchronization_strat_amount": 2,
         "synchronization_strat_timeout": 3,
 
         "sparsification_type": SparsificationType.LAYERWISE_TOPK,
-        "sparse_k": 100,
-        "sparse_perc": 0.2,
+        "sparsification_k": 100,
+        "sparsification_percentage": 0.2,
 
-        "num_fed_epochs": 5,
-        "num_epochs": 1, # TODO: FIXME: this number corresponds to the local training rounds at the moment
-
-        "tensorboard_logging": False,
-        "performance_logging": True,
-        "communication_logging": True,
+        "log_tensorboard_flag": False,
+        "log_performance_flag": True,
+        "log_communication_flag": True,
         "log_dir": "./log",
         "log_level": logging.DEBUG,
     }
@@ -75,7 +76,7 @@ class ConfigurationUtils:
                 raise RuntimeError(f'Cannot convert type {type(value)} to enum {enum_class.__name__}.')
             return value
         config["dataset_id"] = convertEnum(config["dataset_id"], DatasetID)
-        config["part_scheme"] = convertEnum(config["part_scheme"], PartitioningScheme)
+        config["partitioning_scheme"] = convertEnum(config["partitioning_scheme"], PartitioningScheme)
         config["learning_type"] = convertEnum(config["learning_type"], LearningType)
         config["synchronization_strategy"] = convertEnum(config["synchronization_strategy"], SynchronizationStrategy)
         config["sparsification_type"] = convertEnum(config["sparsification_type"], SparsificationType)
@@ -90,7 +91,7 @@ class ConfigurationUtils:
             else:
                 raise RuntimeError(f'Cannot convert type {type(value)} to bool.')
             return value
-        bool_type_configs = ["tensorboard_logging", "performance_logging", "communication_logging"]
+        bool_type_configs = ["log_tensorboard_flag", "log_performance_flag", "log_communication_flag"]
         for btc in bool_type_configs:
             if(btc in config.keys()):
                 config[btc] = convertBool(config[btc])
@@ -104,7 +105,7 @@ class ConfigurationUtils:
                 raise RuntimeError(f'Cannot convert type {type(value)} to int.')
             return value
         int_type_configs = ["seed", "num_workers", "num_threads_server",
-            "synchronization_strat_amount", "num_fed_epochs", "num_epochs", "log_level"]
+            "synchronization_strat_amount", "num_fed_epochs", "num_local_epochs", "log_level"]
         for itc in int_type_configs:
             if(itc in config.keys()):
                 config[itc] = convertInt(config[itc])

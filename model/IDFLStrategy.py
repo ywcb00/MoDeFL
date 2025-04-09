@@ -159,7 +159,7 @@ class IDFLStrategy(ABC):
             self.logger.debug(f'Federated epoch #{epoch}')
 
             train_metrics = self.fitLocal()
-            if(self.config['performance_logging'] and train_metrics):
+            if(self.config['log_performance_flag'] and train_metrics):
                 metric_keys = list(train_metrics.keys())
                 if(isinstance(list(train_metrics.values())[0], list)):
                     # log the result of multiple local epochs in different rows
@@ -169,7 +169,7 @@ class IDFLStrategy(ABC):
                     PerformanceLogger.log(f'{self.config["log_dir"]}/local/train', dict(zip(metric_keys, list(train_metrics.values()))))
 
             eval_metrics = self.evaluate()
-            if(self.config['performance_logging']):
+            if(self.config['log_performance_flag']):
                 PerformanceLogger.log(f'{self.config["log_dir"]}/local/eval', eval_metrics)
 
             self.broadcast()
@@ -177,14 +177,14 @@ class IDFLStrategy(ABC):
             self.aggregate()
 
             eval_avg = self.evaluateNeighbors()
-            if(self.config['performance_logging']):
+            if(self.config['log_performance_flag']):
                 PerformanceLogger.log(f'{self.config["log_dir"]}/neighbors/eval', eval_avg)
 
         eval_avg = self.evaluateNeighbors()
         self.logger.info(f'Evaluation with neighbors resulted in an average of {eval_avg}')
 
         self.stop()
-        if(self.config['performance_logging']):
+        if(self.config['log_performance_flag']):
             PerformanceLogger.write()
-        if(self.config['communication_logging']):
+        if(self.config['log_communication_flag']):
             CommunicationLogger.write(f'{self.config["log_dir"]}/network/communication')

@@ -56,7 +56,7 @@ class DFLv8Strategy(DFLv1Strategy):
         model_delta_partitioned_serialized = {addr: SerializationUtils.serializeModelWeights(weights)
             for addr, weights in model_delta_partitioned.items()}
 
-        if(self.config["communication_logging"]):
+        if(self.config["log_communication_flag"]):
             for addr, weights in model_delta_partitioned.items():
                 CommunicationLogger.log(self.config["address"], addr,
                     {"size": weights.getSize(), "dtype": weights.getDTypeName()})
@@ -79,7 +79,7 @@ class DFLv8Strategy(DFLv1Strategy):
         global_partition_serialized = SerializationUtils.serializeModelWeights(
             self.global_weight_partition)
 
-        if(self.config["communication_logging"]):
+        if(self.config["log_communication_flag"]):
             CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
                 {"size": self.global_weight_partition.getSize(), "dtype": self.global_weight_partition.getDTypeName()})
 

@@ -41,7 +41,7 @@ class DFLv7Strategy(IDFLStrategy):
         self.model_update_service.startServer(callbacks)
 
     def fitLocal(self):
-        self.logger.info(f'Fitting local model for {self.config["num_epochs"]} local epochs.')
+        self.logger.info(f'Fitting local model for {self.config["num_local_epochs"]} local epochs.')
 
         train_metrics = None
         self.previous_weights = self.keras_model.getWeights()
@@ -56,7 +56,7 @@ class DFLv7Strategy(IDFLStrategy):
             self.computed_gradient, self.config)
         sparse_gradient_serialized = SerializationUtils.serializeSparseGradient(sparse_gradient)
 
-        if(self.config["communication_logging"]):
+        if(self.config["log_communication_flag"]):
             CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
                 {"size": sparse_gradient.getSize(), "dtype": sparse_gradient.getDTypeName()})
 

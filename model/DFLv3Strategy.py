@@ -30,7 +30,7 @@ class DFLv3Strategy(IDFLStrategy):
     def __init__(self, config, keras_model, dataset):
         super().__init__(config, keras_model, dataset)
         self.model_parameters = keras_model.getWeights()
-        # shape_gradient = keras_model.computeGradient(dataset, num_epochs=1)
+        # shape_gradient = keras_model.computeGradient(dataset, num_local_epochs=1)
         shape_gradient = self.model_parameters # gradient and weights have the same shape, only used to determine shape
         # TODO: set the hyperparameter a_ma (i.e., moving average magnitude)
         self.mewma = MultivariateExponentiallyWeightedMovingAverage(
@@ -64,7 +64,7 @@ class DFLv3Strategy(IDFLStrategy):
         self.model_update_service.startServer(callbacks)
 
     def fitLocal(self):
-        self.logger.info(f'Fitting local model for {self.config["num_epochs"]} local epochs.')
+        self.logger.info(f'Fitting local model for {self.config["num_local_epochs"]} local epochs.')
         fit_history = self.keras_model.fit(self.dataset)
         train_metrics = fit_history.history
         return train_metrics
@@ -74,7 +74,7 @@ class DFLv3Strategy(IDFLStrategy):
         gradient_predictions_serialized = dict(
             [(addr, SerializationUtils.serializeGradient(pg)) for addr, pg in self.mewma.get().items()])
 
-        if(self.config["communication_logging"]):
+        if(self.config["log_communication_flag"]):
             CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
                 {"size": self.model_parameters.getSize(), "dtype": self.model_parameters.getDTypeName()})
             for addr, pg in self.mewma.get().items():
@@ -90,7 +90,7 @@ class DFLv3Strategy(IDFLStrategy):
         for addr, (mp, _) in received_model_updates.items():
             comp_grad_model.setWeights(mp)
             # NOTE: computing only one gradient per neighbor
-            computed_gradients[addr] = comp_grad_model.computeGradient(self.dataset, num_epochs=1)
+            computed_gradients[addr] = comp_grad_model.computeGradient(self.dataset, num_local_epochs=1)
         return computed_gradients
 
     def aggregate(self):

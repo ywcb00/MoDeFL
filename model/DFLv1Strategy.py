@@ -38,7 +38,7 @@ class DFLv1Strategy(IDFLStrategy):
         self.model_update_service.startServer(callbacks)
 
     def fitLocal(self):
-        self.logger.info(f'Fitting local model for {self.config["num_epochs"]} local epochs.')
+        self.logger.info(f'Fitting local model for {self.config["num_local_epochs"]} local epochs.')
         self.previous_weights = self.keras_model.getWeights()
         fit_history = self.keras_model.fit(self.dataset)
         train_metrics = fit_history.history
@@ -49,7 +49,7 @@ class DFLv1Strategy(IDFLStrategy):
         model_delta = current_weights - self.previous_weights
         model_delta_serialized = SerializationUtils.serializeModelWeights(model_delta)
 
-        if(self.config["communication_logging"]):
+        if(self.config["log_communication_flag"]):
             CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
                 {"size": model_delta.getSize(), "dtype": model_delta.getDTypeName()})
 
