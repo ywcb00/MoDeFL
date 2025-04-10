@@ -3,6 +3,8 @@ from enum import Enum
 import math
 from queue import SimpleQueue
 
+from model.SerializationUtils import SerializationUtils
+
 class SynchronizationStrategy(Enum):
     ONE_FROM_EACH = 1
     AVAILABLE = 2
@@ -19,21 +21,44 @@ class ModelUpdateMarket:
             [(addr, SimpleQueue()) for addr in config["neighbors"]])
 
     def get(self):
+        model_updates_dict = None
         match self.config["synchronization_strategy"]:
             case SynchronizationStrategy.ONE_FROM_EACH:
-                return self.getOneFromAll()
+                model_updates_dict = self.getOneFromAll()
             case SynchronizationStrategy.AVAILABLE:
-                return self.getAvailable()
+                model_updates_dict = self.getAvailable()
             case SynchronizationStrategy.MIN_ONE_FROM_EACH:
-                return self.getAtLeastOneFromAll()
+                model_updates_dict = self.getAtLeastOneFromAll()
             case SynchronizationStrategy.ONE_FROM_MIN_PERCENT:
-                return self.getOneFromAtLeastPercentage()
+                model_updates_dict = self.getOneFromAtLeastPercentage()
             case SynchronizationStrategy.MIN_K:
-                return self.getAtLeastK()
+                model_updates_dict = self.getAtLeastK()
             case SynchronizationStrategy.ONE_FROM_EACH_T:
-                return self.getOneFromAllTimeout()
+                model_updates_dict = self.getOneFromAllTimeout()
             case _:
                 raise NotImplementedError
+
+        model_updates_dict = {key: val for key, val in model_updates_dict.items() if val}
+        return model_updates_dict
+
+    def putUpdate(self, update, address):
+        weights = SerializationUtils.deserializeModelWeights(update.weights.weights)
+        gradient = SerializationUtils.deserializeGradient(update.gradient.gradient)
+        market_element = None if (not weights and not gradient) else {
+            "weights": weights, "gradient": gradient,
+            "aggregation_weight": update.aggregation_weight
+        }
+        self.put(market_element, address)
+
+    def putSparseUpdate(self, update, address):
+        # TODO: allow for sparse model weights
+        weights = SerializationUtils.deserializeModelWeights(update.weights.weights)
+        gradient = SerializationUtils.deserializeSparseGradient(update.gradient.gradient)
+        market_element = None if (not weights and not gradient) else {
+            "weights": weights, "gradient": gradient,
+            "aggregation_weight": update.aggregation_weight
+        }
+        self.put(market_element, address)
 
     def put(self, elem, address):
         self.model_updates[address].put(elem)
@@ -42,7 +67,10 @@ class ModelUpdateMarket:
     def getOneFromAll(self):
         result = dict()
         for addr, queue in self.model_updates.items():
-            result[addr] = queue.get(block=True, timeout=None)
+            update = queue.get(block=True, timeout=None)
+            while(not self.config["synchronization_strat_allowempty"] and not update):
+                update = queue.get(block=True, timeout=None)
+            result[addr] = update
         return result
 
     # do not block, get all model updates that are currently available
@@ -61,7 +89,10 @@ class ModelUpdateMarket:
     def getAtLeastOneFromAll(self):
         result = dict()
         for addr, queue in self.model_updates.items():
-            result[addr] = [queue.get(block=True, timeout=None)]
+            update = [queue.get(block=True, timeout=None)]
+            while(not self.config["synchronization_strat_allowempty"] and not update[0]):
+                update = [queue.get(block=True, timeout=None)]
+            result[addr] = update
         for addr, queue in self.model_updates.items():
             try:
                 while True:
@@ -70,7 +101,7 @@ class ModelUpdateMarket:
                 pass # do nothing, queue is empty, continue with next queue
         return result
 
-    # poll until we got one model from at least the specified proportion of neighbors
+    # poll until we got one model update from at least the specified proportion of neighbors
     def getOneFromAtLeastPercentage(self):
         percentage = self.config.setdefault("synchronization_strat_percentage", 0.5)
         amount = math.ceil(len(self.model_updates) * percentage)
@@ -80,7 +111,9 @@ class ModelUpdateMarket:
             for addr in remaining_addresses:
                 queue = self.model_updates[addr]
                 try:
-                    result[addr] = queue.get(block=False)
+                    update = queue.get(block=False)
+                    if(self.config["synchronization_strat_allowempty"] or update):
+                        result[addr] = update
                 except queue.Empty:
                     pass # do nothing, queue is empty, continue with next queue
         return result
@@ -92,13 +125,15 @@ class ModelUpdateMarket:
         while(amount > 0):
             for addr, queue in self.model_updates.items():
                 try:
-                    result.setdefault(addr, list()).append(queue.get(block=False))
-                    amount -= 1
+                    update = queue.get(block=False)
+                    if(self.config["synchronization_strat_allowempty"] or update):
+                        result.setdefault(addr, list()).append(update)
+                        amount -= 1
                 except queue.Empty:
                     pass # do nothing, queue is empty, continue with next queue
         return result
 
-    # try to get one from each neighbor until we reach the specified timeout (seconds)
+    # try to get one from each neighbor until we reach the specified timeout (seconds) (allow empty)
     def getOneFromAllTimeout(self, timeout):
         timeout = self.config.setdefault("synchronization_strat_timeout", 3)
         async def getOneTimeout(addr, queue, timeout):

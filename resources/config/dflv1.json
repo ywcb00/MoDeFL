@@ -11,6 +11,10 @@
     "learning_type": 1,
     "synchronization_strategy": 1,
 
+    "synchronization_strat_allowempty": 1,
+    "partialdeviceparticipation_strategy": 1,
+    "partialdeviceparticipation_k": 1,
+
     "num_fed_epochs": 5,
     "num_local_epochs": 2,
 

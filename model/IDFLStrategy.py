@@ -30,15 +30,25 @@ class IDFLStrategy(ABC):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
             await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
-                weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized),
-                aggregation_weight=aggregation_weight,
+                update=ModelUpdate_pb2.ModelParameterUpdate(
+                    weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized),
+                    aggregation_weight=aggregation_weight),
                 identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
-    async def broadcastWeightsToNeighbors(self, weights_serialized, aggregation_weight=0):
+    async def broadcastWeightsToNeighbors(self, weights_serialized,
+        aggregation_weight=0, selected_neighbors=None):
+        # neighbors are selected by partial device participation strategy
+        if(selected_neighbors == None):
+            selected_neighbors = self.config["neighbors"]
         tasks = []
+        self.logger.debug(f'Broadcasting updates to {len(selected_neighbors)} neighboring actors.')
         for addr in self.config["neighbors"]:
-            tasks.append(asyncio.create_task(self.broadcastWeightsTo(weights_serialized,
-                addr, aggregation_weight)))
+            if addr in selected_neighbors:
+                tasks.append(asyncio.create_task(self.broadcastWeightsTo(weights_serialized,
+                    addr, aggregation_weight)))
+            else: # send an empty model update message to excluded neighbors
+                tasks.append(asyncio.create_task(self.broadcastWeightsTo(None,
+                    addr)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
     async def broadcastWeightPartitions(self, weights_partitioned_serialized,
@@ -54,32 +64,49 @@ class IDFLStrategy(ABC):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
             await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
-                weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized),
-                aggregation_weight=aggregation_weight,
-                gradient=ModelUpdate_pb2.ModelGradient(gradient=gradient_serialized),
+                update=ModelUpdate_pb2.ModelParameterUpdate(
+                    weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized),
+                    gradient=ModelUpdate_pb2.ModelGradient(gradient=gradient_serialized),
+                    aggregation_weight=aggregation_weight),
                 identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
     async def broadcastWeightsAndGradientsToNeighbors(self, weights_serialized,
-        gradients_serialized, aggregation_weight=0):
+        gradients_serialized, aggregation_weight=0, selected_neighbors=None):
+        if(selected_neighbors == None):
+            selected_neighbors = self.config["neighbors"]
         tasks = []
+        self.logger.debug(f'Broadcasting updates to {len(selected_neighbors)} neighboring actors.')
         for addr in self.config["neighbors"]:
-            tasks.append(asyncio.create_task(self.broadcastWeightsAndGradientTo(
-                weights_serialized, gradients_serialized[addr], addr, aggregation_weight)))
+            if addr in selected_neighbors:
+                tasks.append(asyncio.create_task(self.broadcastWeightsAndGradientTo(
+                    weights_serialized, gradients_serialized[addr], addr, aggregation_weight)))
+            else:
+                tasks.append(asyncio.create_task(self.broadcastWeightsAndGradientTo(
+                    None, None, addr)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
     async def broadcastGradientTo(self, gradient_serialized, address, aggregation_weight=0):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
             await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
-                aggregation_weight=aggregation_weight,
-                gradient=ModelUpdate_pb2.ModelGradient(gradient=gradient_serialized),
+                update=ModelUpdate_pb2.ModelParameterUpdate(
+                    gradient=ModelUpdate_pb2.ModelGradient(gradient=gradient_serialized),
+                    aggregation_weight=aggregation_weight),
                 identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
-    async def broadcastGradientToNeighbors(self, gradient_serialized, aggregation_weight=0):
+    async def broadcastGradientToNeighbors(self, gradient_serialized, aggregation_weight=0,
+        selected_neighbors=None):
+        if(selected_neighbors == None):
+            selected_neighbors = self.config["neighbors"]
         tasks = []
+        self.logger.debug(f'Broadcasting updates to {len(selected_neighbors)} neighboring actors.')
         for addr in self.config["neighbors"]:
-            tasks.append(asyncio.create_task(self.broadcastGradientTo(
-                gradient_serialized, addr, aggregation_weight)))
+            if addr in selected_neighbors:
+                tasks.append(asyncio.create_task(self.broadcastGradientTo(
+                    gradient_serialized, addr, aggregation_weight)))
+            else:
+                tasks.append(asyncio.create_task(self.broadcastGradientTo(
+                    None, addr)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
     @abstractmethod

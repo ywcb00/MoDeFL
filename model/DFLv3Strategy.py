@@ -39,11 +39,8 @@ class DFLv3Strategy(IDFLStrategy):
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
-        def transferModelUpdateCallback(weights_serialized, aggregation_weight,
-            gradient_serialized, address):
-            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
-            gradient = SerializationUtils.deserializeGradient(gradient_serialized)
-            self.model_update_market.put((weights, gradient), address)
+        def transferModelUpdateCallback(update, address):
+            self.model_update_market.putUpdate(update, address)
 
         def evaluateModelCallback(weights_serialized):
             weights = SerializationUtils.deserializeModelWeights(weights_serialized)
@@ -100,10 +97,13 @@ class DFLv3Strategy(IDFLStrategy):
         mu_t = 0.005
         beta_t = dict([(actor_addr, 1 / 15) for actor_addr in self.config["neighbors"]])
         current_weights = self.keras_model.getWeights()
+
         received_model_updates = self.model_update_market.get()
-        computed_gradients = self.computeGradients(received_model_updates)
+        received_model_updates_tuples = {key: (val["weights"], val["gradient"]) for key, val in received_model_updates.items()}
+
+        computed_gradients = self.computeGradients(received_model_updates_tuples)
         self.model_parameters, adjusted_model_parameters = AggregationUtils.consensusbasedFedAvgWithGradExchange(
-            current_weights, received_model_updates, eps_t, alph_t, mu_t, beta_t)
+            current_weights, received_model_updates_tuples, eps_t, alph_t, mu_t, beta_t)
         self.mewma.predict(computed_gradients)
         self.keras_model.setWeights(adjusted_model_parameters)
 

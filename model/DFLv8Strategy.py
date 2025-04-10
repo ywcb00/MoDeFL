@@ -23,12 +23,11 @@ class DFLv8Strategy(DFLv1Strategy):
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
-        def transferModelUpdateCallback(weights_serialized, aggregation_weight, _, address):
-            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
-            if(aggregation_weight == GLOBAL_PARTITION_FLAG):
-                self.model_partition_market.put(weights, address)
+        def transferModelUpdateCallback(update, address):
+            if(update.aggregation_weight == GLOBAL_PARTITION_FLAG):
+                self.model_partition_market.putUpdate(update, address)
             else:
-                self.model_update_market.put((weights, aggregation_weight), address)
+                self.model_update_market.putUpdate(update, address)
 
         def evaluateModelCallback(weights_serialized):
             weights = SerializationUtils.deserializeModelWeights(weights_serialized)
@@ -68,8 +67,9 @@ class DFLv8Strategy(DFLv1Strategy):
         current_model_delta = PartitioningUtils.getParameterPartition(
             (self.keras_model.getWeights() - self.previous_weights),
             self.config["actor_idx"], self.config["num_workers"])
-        model_deltas_and_weight = self.model_update_market.get()
-        model_deltas, aggregation_weights = zip(*list(model_deltas_and_weight.values()))
+        received_model_update_vals = self.model_update_market.get().values()
+        model_deltas = [rmu["weights"] for rmu in received_model_update_vals]
+        aggregation_weights = [rmu["aggregation_weight"] for rmu in received_model_update_vals]
         model_deltas = [current_model_delta, *model_deltas]
         aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
         avg_model_deltas = AggregationUtils.averageModelWeights(model_deltas, aggregation_weights)
@@ -88,10 +88,10 @@ class DFLv8Strategy(DFLv1Strategy):
 
     def setLocalWeights(self):
         actor_idx_lookup_dict = dict(zip(self.config["neighbors"], self.config["neighbor_idx"]))
-        model_partitions = self.model_partition_market.getOneFromAll()
+        received_model_partitions = self.model_partition_market.getOneFromAll()
 
         # re-construct weight matrix from partitions
-        partition_dict = {actor_idx_lookup_dict[addr]: part for addr, part in model_partitions.items()}
+        partition_dict = {actor_idx_lookup_dict[addr]: elem["weights"] for addr, elem in received_model_partitions.items()}
         partition_dict[self.config["actor_idx"]] = self.global_weight_partition
         flattened_parameters = PartitioningUtils.joinParameterPartitions(partition_dict)
         new_weights = Weights.fromFlattened(flattened_parameters, self.keras_model.getWeights())

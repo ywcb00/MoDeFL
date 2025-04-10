@@ -1,5 +1,6 @@
 from model.LearningStrategy import LearningType
 from model.ModelUpdateMarket import SynchronizationStrategy
+from network.PartialDeviceParticipation import PartialDeviceParticipationStrategy
 from tffdataset.DatasetUtils import DatasetID
 from tffdataset.FedDataset import PartitioningScheme
 from tffmodel.types.SparseGradient import SparsificationType
@@ -31,10 +32,14 @@ class ConfigurationUtils:
         "synchronization_strat_percentage": 0.5,
         "synchronization_strat_amount": 2,
         "synchronization_strat_timeout": 3,
+        "synchronization_strat_allowempty": False,
 
         "sparsification_type": SparsificationType.LAYERWISE_TOPK,
         "sparsification_k": 100,
         "sparsification_percentage": 0.2,
+
+        "partialdeviceparticipation_strategy": PartialDeviceParticipationStrategy.NoneStrategy,
+        "partialdeviceparticipation_k": 2,
 
         "log_tensorboard_flag": False,
         "log_performance_flag": True,
@@ -80,6 +85,8 @@ class ConfigurationUtils:
         config["learning_type"] = convertEnum(config["learning_type"], LearningType)
         config["synchronization_strategy"] = convertEnum(config["synchronization_strategy"], SynchronizationStrategy)
         config["sparsification_type"] = convertEnum(config["sparsification_type"], SparsificationType)
+        config["partialdeviceparticipation_strategy"] = convertEnum(config["partialdeviceparticipation_strategy"],
+            PartialDeviceParticipationStrategy)
 
         def convertBool(value):
             if(isinstance(value, str)):
@@ -91,7 +98,8 @@ class ConfigurationUtils:
             else:
                 raise RuntimeError(f'Cannot convert type {type(value)} to bool.')
             return value
-        bool_type_configs = ["log_tensorboard_flag", "log_performance_flag", "log_communication_flag"]
+        bool_type_configs = ["synchronization_strat_allowempty", "log_tensorboard_flag",
+            "log_performance_flag", "log_communication_flag"]
         for btc in bool_type_configs:
             if(btc in config.keys()):
                 config[btc] = convertBool(config[btc])
@@ -105,7 +113,8 @@ class ConfigurationUtils:
                 raise RuntimeError(f'Cannot convert type {type(value)} to int.')
             return value
         int_type_configs = ["seed", "num_workers", "num_threads_server",
-            "synchronization_strat_amount", "num_fed_epochs", "num_local_epochs", "log_level"]
+            "num_fed_epochs", "num_local_epochs", "synchronization_strat_amount",
+            "sparsification_k", "partialdeviceparticipation_k", "log_level"]
         for itc in int_type_configs:
             if(itc in config.keys()):
                 config[itc] = convertInt(config[itc])
@@ -119,7 +128,7 @@ class ConfigurationUtils:
                 raise RuntimeError(f'Cannot convert type {type(value)} to float.')
             return value
         float_type_configs = ["synchronization_strat_percentage", "synchronization_strat_timeout",
-            "lr", "lr_server", "lr_client"]
+            "sparsification_percentage", "lr", "lr_server", "lr_client"]
         for ftc in float_type_configs:
             if(ftc in config.keys()):
                 config[ftc] = convertFloat(config[ftc])

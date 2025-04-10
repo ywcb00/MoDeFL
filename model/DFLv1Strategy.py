@@ -2,6 +2,7 @@ from model.AggregationUtils import AggregationUtils
 from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
+from network.PartialDeviceParticipation import PartialDeviceParticipation
 from tffmodel.KerasModel import KerasModel
 from utils.CommunicationLogger import CommunicationLogger
 
@@ -15,9 +16,8 @@ class DFLv1Strategy(IDFLStrategy):
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
-        def transferModelUpdateCallback(weights_serialized, aggregation_weight, _, address):
-            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
-            self.model_update_market.put((weights, aggregation_weight), address)
+        def transferModelUpdateCallback(update, address):
+            self.model_update_market.putUpdate(update, address)
 
         def evaluateModelCallback(weights_serialized):
             weights = SerializationUtils.deserializeModelWeights(weights_serialized)
@@ -49,17 +49,22 @@ class DFLv1Strategy(IDFLStrategy):
         model_delta = current_weights - self.previous_weights
         model_delta_serialized = SerializationUtils.serializeModelWeights(model_delta)
 
+        selected_neighbors = PartialDeviceParticipation.getNeighbors(self.config)
+
         if(self.config["log_communication_flag"]):
-            CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
+            CommunicationLogger.logMultiple(self.config["address"], selected_neighbors,
                 {"size": model_delta.getSize(), "dtype": model_delta.getDTypeName()})
 
         asyncio.run(self.broadcastWeightsToNeighbors(model_delta_serialized,
-            self.dataset.train.cardinality().numpy()))
+            self.dataset.train.cardinality().numpy(),
+            selected_neighbors=selected_neighbors))
 
     def aggregate(self):
         current_model_delta = self.keras_model.getWeights() - self.previous_weights
-        model_deltas_and_weight = self.model_update_market.get()
-        model_deltas, aggregation_weights = zip(*list(model_deltas_and_weight.values()))
+        received_model_updates_vals = self.model_update_market.get().values()
+        model_deltas = [rmu["weights"] for rmu in received_model_updates_vals]
+        aggregation_weights = [rmu["aggregation_weight"] for rmu in received_model_updates_vals]
+        # model_deltas, aggregation_weights = zip(*list(model_deltas_and_weight.values()))
         model_deltas = [current_model_delta, *model_deltas]
         aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
         avg_model_deltas = AggregationUtils.averageModelWeights(model_deltas, aggregation_weights)

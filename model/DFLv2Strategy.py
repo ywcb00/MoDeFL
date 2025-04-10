@@ -15,9 +15,8 @@ class DFLv2Strategy(IDFLStrategy):
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
-        def transferModelUpdateCallback(weights_serialized, aggregation_weight, _, address):
-            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
-            self.model_update_market.put(weights, address)
+        def transferModelUpdateCallback(update, address):
+            self.model_update_market.putUpdate(update, address)
 
         def evaluateModelCallback(weights_serialized):
             weights = SerializationUtils.deserializeModelWeights(weights_serialized)
@@ -58,9 +57,10 @@ class DFLv2Strategy(IDFLStrategy):
         eps_t = 1 / len(self.config["neighbors"])
         alph_t = dict([(actor_addr, 1) for actor_addr in self.config["neighbors"]])
         current_weights = self.keras_model.getWeights()
-        model_updates = self.model_update_market.get()
+        received_model_updates = self.model_update_market.get()
+        received_model_weights = {key: val["weights"] for key, val in received_model_updates.items()}
         new_weights = AggregationUtils.consensusbasedFedAvg(
-            current_weights, model_updates, eps_t, alph_t)
+            current_weights, received_model_weights, eps_t, alph_t)
         self.keras_model.setWeights(new_weights)
 
     def stop(self):

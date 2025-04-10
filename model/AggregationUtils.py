@@ -8,9 +8,9 @@ class AggregationUtils:
         return result
 
     @classmethod
-    def consensusbasedFedAvg(self_class, current_model_weights, model_updates, eps_t, alph_t):
+    def consensusbasedFedAvg(self_class, current_model_weights, received_model_weights, eps_t, alph_t):
         result = current_model_weights
-        for addr, mu in model_updates.items():
+        for addr, mu in received_model_weights.items():
             result += (mu - current_model_weights) * eps_t * alph_t[addr]
         return result
 

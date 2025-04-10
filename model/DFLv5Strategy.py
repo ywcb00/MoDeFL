@@ -16,10 +16,8 @@ class DFLv5Strategy(IDFLStrategy):
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
-        def transferModelUpdateCallback(_weights_serialized, aggregation_weight,
-            gradient_serialized, address):
-            gradient = SerializationUtils.deserializeGradient(gradient_serialized)
-            self.model_update_market.put((gradient, aggregation_weight), address)
+        def transferModelUpdateCallback(update, address):
+            self.model_update_market.putUpdate(update, address)
 
         def evaluateModelCallback(weights_serialized):
             weights = SerializationUtils.deserializeModelWeights(weights_serialized)
@@ -58,8 +56,9 @@ class DFLv5Strategy(IDFLStrategy):
             self.dataset.train.cardinality().numpy()))
 
     def aggregate(self):
-        model_gradients_and_weight = self.model_update_market.get()
-        model_gradients, aggregation_weights = zip(*list(model_gradients_and_weight.values()))
+        received_model_update_vals = self.model_update_market.get().values()
+        model_gradients = [rmu["gradient"] for rmu in received_model_update_vals]
+        aggregation_weights = [rmu["aggregation_weight"] for rmu in received_model_update_vals]
         model_gradients = [self.computed_gradient, *model_gradients]
         aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
 

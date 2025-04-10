@@ -13,6 +13,8 @@ class SerializationUtils:
 
     @classmethod
     def deserializeModelWeights(self_class, weights_serialized):
+        if(not weights_serialized):
+            return None
         return Weights.deserialize(weights_serialized)
 
     @classmethod
@@ -21,6 +23,8 @@ class SerializationUtils:
 
     @classmethod
     def deserializeGradient(self_class, gradient_serialized):
+        if(not gradient_serialized):
+            return None
         return Gradient.deserialize(gradient_serialized)
 
     @classmethod
@@ -29,6 +33,8 @@ class SerializationUtils:
 
     @classmethod
     def deserializeSparseGradient(self_class, sparse_gradient_serialized):
+        if(not sparse_gradient_serialized):
+            return None
         return SparseGradient.deserialize(sparse_gradient_serialized)
 
     @classmethod
