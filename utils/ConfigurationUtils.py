@@ -3,7 +3,7 @@ from model.ModelUpdateMarket import SynchronizationStrategy
 from network.PartialDeviceParticipation import PartialDeviceParticipationStrategy
 from tffdataset.DatasetUtils import DatasetID
 from tffdataset.FedDataset import PartitioningScheme
-from tffmodel.types.SparseGradient import SparsificationType
+from network.Compression import CompressionType
 
 import json
 import logging
@@ -34,9 +34,9 @@ class ConfigurationUtils:
         "synchronization_strat_timeout": 3,
         "synchronization_strat_allowempty": False,
 
-        "sparsification_type": SparsificationType.LAYERWISE_TOPK,
-        "sparsification_k": 100,
-        "sparsification_percentage": 0.2,
+        "compression_type": CompressionType.NoneType,
+        "compression_k": 100,
+        "compression_percentage": 0.2,
 
         "partialdeviceparticipation_strategy": PartialDeviceParticipationStrategy.NoneStrategy,
         "partialdeviceparticipation_k": 2,
@@ -84,7 +84,7 @@ class ConfigurationUtils:
         config["partitioning_scheme"] = convertEnum(config["partitioning_scheme"], PartitioningScheme)
         config["learning_type"] = convertEnum(config["learning_type"], LearningType)
         config["synchronization_strategy"] = convertEnum(config["synchronization_strategy"], SynchronizationStrategy)
-        config["sparsification_type"] = convertEnum(config["sparsification_type"], SparsificationType)
+        config["compression_type"] = convertEnum(config["compression_type"], CompressionType)
         config["partialdeviceparticipation_strategy"] = convertEnum(config["partialdeviceparticipation_strategy"],
             PartialDeviceParticipationStrategy)
 
@@ -114,7 +114,7 @@ class ConfigurationUtils:
             return value
         int_type_configs = ["seed", "num_workers", "num_threads_server",
             "num_fed_epochs", "num_local_epochs", "synchronization_strat_amount",
-            "sparsification_k", "partialdeviceparticipation_k", "log_level"]
+            "compression_k", "partialdeviceparticipation_k", "log_level"]
         for itc in int_type_configs:
             if(itc in config.keys()):
                 config[itc] = convertInt(config[itc])
@@ -128,7 +128,7 @@ class ConfigurationUtils:
                 raise RuntimeError(f'Cannot convert type {type(value)} to float.')
             return value
         float_type_configs = ["synchronization_strat_percentage", "synchronization_strat_timeout",
-            "sparsification_percentage", "lr", "lr_server", "lr_client"]
+            "compression_percentage", "lr", "lr_server", "lr_client"]
         for ftc in float_type_configs:
             if(ftc in config.keys()):
                 config[ftc] = convertFloat(config[ftc])

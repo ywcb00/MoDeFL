@@ -1,5 +1,5 @@
 from tffmodel.types.Gradient import Gradient
-from tffmodel.types.SparseGradient import SparseGradient
+from tffmodel.types.HeterogeneousSparseArray import HeterogeneousSparseArray
 from tffmodel.types.Weights import Weights
 
 import numpy as np
@@ -35,7 +35,7 @@ class SerializationUtils:
     def deserializeSparseGradient(self_class, sparse_gradient_serialized):
         if(not sparse_gradient_serialized):
             return None
-        return SparseGradient.deserialize(sparse_gradient_serialized)
+        return HeterogeneousSparseArray.deserialize(sparse_gradient_serialized)
 
     @classmethod
     def serializeModel(self_class, model, optimizer):

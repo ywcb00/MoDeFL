@@ -1,9 +1,9 @@
 from model.AggregationUtils import AggregationUtils
 from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
+from network.Compression import Compression
 from network.ModelUpdateService import ModelUpdateService
 from tffmodel.KerasModel import KerasModel
-from tffmodel.types.SparseGradient import SparseGradient
 from utils.CommunicationLogger import CommunicationLogger
 
 import asyncio
@@ -50,7 +50,7 @@ class DFLv7Strategy(IDFLStrategy):
 
     def broadcast(self):
         # TODO: set the hyperparameters for sparsification
-        sparse_gradient = SparseGradient.sparsifyGradient(
+        sparse_gradient = Compression.compress(
             self.computed_gradient, self.config)
         sparse_gradient_serialized = SerializationUtils.serializeSparseGradient(sparse_gradient)
 
@@ -65,7 +65,7 @@ class DFLv7Strategy(IDFLStrategy):
         received_model_update_vals = self.model_update_market.get().values()
         model_gradients = [rmu["gradient"] for rmu in received_model_update_vals]
         aggregation_weights = [rmu["aggregation_weight"] for rmu in received_model_update_vals]
-        model_gradients = [SparseGradient.sparsifyGradient(
+        model_gradients = [Compression.compress(
             self.computed_gradient, self.config), *model_gradients]
         aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
         avg_model_gradient = AggregationUtils.averageModelWeights(model_gradients, aggregation_weights)

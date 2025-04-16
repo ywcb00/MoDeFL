@@ -11,8 +11,8 @@
     "learning_type": 7,
     "synchronization_strategy": 1,
 
-    "sparsification_type": 2,
-    "sparsification_percentage": 0.2,
+    "compression_type": 102,
+    "compression_percentage": 0.2,
 
     "num_fed_epochs": 5,
     "num_local_epochs": 2,
