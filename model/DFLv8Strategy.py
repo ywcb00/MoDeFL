@@ -29,8 +29,9 @@ class DFLv8Strategy(DFLv1Strategy):
             else:
                 self.model_update_market.putUpdate(update, address)
 
-        def evaluateModelCallback(weights_serialized):
-            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
+        def evaluateModelCallback(request):
+            weights = SerializationUtils.deserializeParameters(
+                request.parameters, sparse=request.sparse)
             eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 
@@ -52,15 +53,13 @@ class DFLv8Strategy(DFLv1Strategy):
         model_delta = current_weights - self.previous_weights
 
         model_delta_partitioned = PartitioningUtils.partitionModelParameters(model_delta, self.config)
-        model_delta_partitioned_serialized = {addr: SerializationUtils.serializeModelWeights(weights)
-            for addr, weights in model_delta_partitioned.items()}
 
         if(self.config["log_communication_flag"]):
             for addr, weights in model_delta_partitioned.items():
                 CommunicationLogger.log(self.config["address"], addr,
                     {"size": weights.getSize(), "dtype": weights.getDTypeName()})
 
-        asyncio.run(self.broadcastWeightPartitions(model_delta_partitioned_serialized,
+        asyncio.run(self.broadcastWeightPartitions(model_delta_partitioned,
             self.dataset.train.cardinality().numpy()))
 
     def aggregateWeightPartitions(self):
@@ -76,14 +75,11 @@ class DFLv8Strategy(DFLv1Strategy):
         self.global_weight_partition = self.global_weight_partition + avg_model_deltas
 
     def broadcastGlobalWeightPartition(self):
-        global_partition_serialized = SerializationUtils.serializeModelWeights(
-            self.global_weight_partition)
-
         if(self.config["log_communication_flag"]):
             CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
                 {"size": self.global_weight_partition.getSize(), "dtype": self.global_weight_partition.getDTypeName()})
 
-        asyncio.run(self.broadcastWeightsToNeighbors(global_partition_serialized,
+        asyncio.run(self.broadcastWeightsToNeighbors(self.global_weight_partition,
             aggregation_weight=GLOBAL_PARTITION_FLAG))
 
     def setLocalWeights(self):

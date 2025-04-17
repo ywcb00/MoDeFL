@@ -18,8 +18,9 @@ class DFLv2Strategy(IDFLStrategy):
         def transferModelUpdateCallback(update, address):
             self.model_update_market.putUpdate(update, address)
 
-        def evaluateModelCallback(weights_serialized):
-            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
+        def evaluateModelCallback(request):
+            weights = SerializationUtils.deserializeParameters(
+                request.parameters, sparse=request.sparse)
             eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 
@@ -44,13 +45,12 @@ class DFLv2Strategy(IDFLStrategy):
 
     def broadcast(self):
         weights = self.keras_model.getWeights()
-        weights_serialized = SerializationUtils.serializeModelWeights(weights)
 
         if(self.config["log_communication_flag"]):
             CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
                 {"size": weights.getSize(), "dtype": weights.getDTypeName()})
 
-        asyncio.run(self.broadcastWeightsToNeighbors(weights_serialized))
+        asyncio.run(self.broadcastWeightsToNeighbors(weights))
 
     def aggregate(self):
         # TODO: set the hyperparameters eps_t and alph_t (i.e., consensus step-size and mixing weights)

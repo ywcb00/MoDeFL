@@ -26,17 +26,20 @@ class IDFLStrategy(ABC):
     def fitLocal(self):
         pass
 
-    async def broadcastWeightsTo(self, weights_serialized, address, aggregation_weight=0):
+    async def broadcastWeightsTo(self, weights_serialized, weights_sparse, address, aggregation_weight=0):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
             await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
                 update=ModelUpdate_pb2.ModelParameterUpdate(
-                    weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized),
+                    weights=ModelUpdate_pb2.ModelParameters(
+                        sparse=weights_sparse, parameters=weights_serialized),
                     aggregation_weight=aggregation_weight),
                 identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
-    async def broadcastWeightsToNeighbors(self, weights_serialized,
+    async def broadcastWeightsToNeighbors(self, weights,
         aggregation_weight=0, selected_neighbors=None):
+        weights_serialized = weights.serialize()
+        weights_sparse = weights.is_sparse
         # neighbors are selected by partial device participation strategy
         if(selected_neighbors == None):
             selected_neighbors = self.config["neighbors"]
@@ -44,34 +47,46 @@ class IDFLStrategy(ABC):
         self.logger.debug(f'Broadcasting updates to {len(selected_neighbors)} neighboring actors.')
         for addr in self.config["neighbors"]:
             if addr in selected_neighbors:
-                tasks.append(asyncio.create_task(self.broadcastWeightsTo(weights_serialized,
-                    addr, aggregation_weight)))
+                tasks.append(asyncio.create_task(self.broadcastWeightsTo(
+                    weights_serialized, weights_sparse, addr, aggregation_weight)))
             else: # send an empty model update message to excluded neighbors
-                tasks.append(asyncio.create_task(self.broadcastWeightsTo(None,
-                    addr)))
+                tasks.append(asyncio.create_task(self.broadcastWeightsTo(
+                    None, weights_sparse, addr)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
-    async def broadcastWeightPartitions(self, weights_partitioned_serialized,
+    async def broadcastWeightPartitions(self, weights_partitioned,
         aggregation_weight=0):
+        weights_partitioned_serialized = {addr: weights.serialize()
+            for addr, weights in weights_partitioned.items()}
+        weights_partitioned_sparse = {addr: weights.is_sparse
+            for addr, weights in weights_partitioned.items()}
         tasks = list()
         for addr, weights_serialized in weights_partitioned_serialized.items():
-            tasks.append(asyncio.create_task(self.broadcastWeightsTo(weights_serialized,
-                addr, aggregation_weight)))
+            tasks.append(asyncio.create_task(self.broadcastWeightsTo(
+                weights_serialized, weights_partitioned_sparse[addr], addr, aggregation_weight)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
-    async def broadcastWeightsAndGradientTo(self, weights_serialized,
-        gradient_serialized, address, aggregation_weight=0):
+    async def broadcastWeightsAndGradientTo(self, weights_serialized, weights_sparse,
+        gradient_serialized, gradient_sparse, address, aggregation_weight=0):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
             await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
                 update=ModelUpdate_pb2.ModelParameterUpdate(
-                    weights=ModelUpdate_pb2.ModelWeights(weights=weights_serialized),
-                    gradient=ModelUpdate_pb2.ModelGradient(gradient=gradient_serialized),
+                    weights=ModelUpdate_pb2.ModelParameters(
+                        sparse=weights_sparse, parameters=weights_serialized),
+                    gradient=ModelUpdate_pb2.ModelParameters(
+                        sparse=gradient_sparse, parameters=gradient_serialized),
                     aggregation_weight=aggregation_weight),
                 identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
-    async def broadcastWeightsAndGradientsToNeighbors(self, weights_serialized,
-        gradients_serialized, aggregation_weight=0, selected_neighbors=None):
+    async def broadcastWeightsAndGradientsToNeighbors(self, weights,
+        gradients, aggregation_weight=0, selected_neighbors=None):
+        weights_serialized = weights.serialize()
+        weights_sparse = weights.is_sparse
+        gradients_serialized = dict(
+            [(addr, SerializationUtils.serializeParameters(grad)) for addr, grad in gradients.items()])
+        gradients_sparse = dict(
+            [(addr, grad.is_sparse) for addr, grad in gradients.items()])
         if(selected_neighbors == None):
             selected_neighbors = self.config["neighbors"]
         tasks = []
@@ -79,23 +94,29 @@ class IDFLStrategy(ABC):
         for addr in self.config["neighbors"]:
             if addr in selected_neighbors:
                 tasks.append(asyncio.create_task(self.broadcastWeightsAndGradientTo(
-                    weights_serialized, gradients_serialized[addr], addr, aggregation_weight)))
+                    weights_serialized, weights_sparse,
+                    gradients_serialized[addr], gradients_sparse[addr],
+                     addr, aggregation_weight)))
             else:
                 tasks.append(asyncio.create_task(self.broadcastWeightsAndGradientTo(
-                    None, None, addr)))
+                    None, weights_sparse, None, False, addr)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
-    async def broadcastGradientTo(self, gradient_serialized, address, aggregation_weight=0):
+    async def broadcastGradientTo(self, gradient_serialized, gradient_sparse,
+        address, aggregation_weight=0):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
             await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
                 update=ModelUpdate_pb2.ModelParameterUpdate(
-                    gradient=ModelUpdate_pb2.ModelGradient(gradient=gradient_serialized),
+                    gradient=ModelUpdate_pb2.ModelParameters(
+                        sparse=gradient_sparse, parameters=gradient_serialized),
                     aggregation_weight=aggregation_weight),
                 identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
-    async def broadcastGradientToNeighbors(self, gradient_serialized, aggregation_weight=0,
+    async def broadcastGradientToNeighbors(self, gradient, aggregation_weight=0,
         selected_neighbors=None):
+        gradient_serialized = gradient.serialize()
+        gradient_sparse = gradient.is_sparse
         if(selected_neighbors == None):
             selected_neighbors = self.config["neighbors"]
         tasks = []
@@ -103,10 +124,10 @@ class IDFLStrategy(ABC):
         for addr in self.config["neighbors"]:
             if addr in selected_neighbors:
                 tasks.append(asyncio.create_task(self.broadcastGradientTo(
-                    gradient_serialized, addr, aggregation_weight)))
+                    gradient_serialized, gradient_sparse, addr, aggregation_weight)))
             else:
                 tasks.append(asyncio.create_task(self.broadcastGradientTo(
-                    None, addr)))
+                    None, gradient_sparse, addr)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
     @abstractmethod
@@ -118,17 +139,20 @@ class IDFLStrategy(ABC):
         pass
 
     # obtain evaluation metrics from our own model evaluated on the neighbors' evaluation data
-    async def evaluateWeightsNeighbor(self, weights_serialized, address):
+    async def evaluateWeightsNeighbor(self, weights_serialized, weights_sparse, address):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
             eval_metrics = await stub.EvaluateModel(
-                ModelUpdate_pb2.ModelWeights(weights=weights_serialized))
+                ModelUpdate_pb2.ModelParameters(sparse=weights_sparse, parameters=weights_serialized))
         return eval_metrics.metrics
 
-    async def evaluateWeightsAllNeighbors(self, weights_serialized):
+    async def evaluateWeightsAllNeighbors(self, weights):
+        weights_serialized = weights.serialize()
+        weights_sparse = weights.is_sparse
         tasks = []
         for addr in self.config["neighbors"]:
-            tasks.append(asyncio.create_task(self.evaluateWeightsNeighbor(weights_serialized, addr)))
+            tasks.append(asyncio.create_task(self.evaluateWeightsNeighbor(
+                weights_serialized, weights_sparse, addr)))
         eval_metrics = []
         for t in tasks:
             response = await t
@@ -137,9 +161,8 @@ class IDFLStrategy(ABC):
 
     def evaluateNeighbors(self):
         weights = self.keras_model.getWeights()
-        weights_serialized = SerializationUtils.serializeModelWeights(weights)
 
-        eval_metrics = asyncio.run(self.evaluateWeightsAllNeighbors(weights_serialized))
+        eval_metrics = asyncio.run(self.evaluateWeightsAllNeighbors(weights))
         eval_metrics.append(self.evaluate())
         eval_avg = dict([(key, np.mean([em[key] for em in eval_metrics]))
             for key in eval_metrics[0].keys()])

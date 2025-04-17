@@ -19,8 +19,9 @@ class DFLv5Strategy(IDFLStrategy):
         def transferModelUpdateCallback(update, address):
             self.model_update_market.putUpdate(update, address)
 
-        def evaluateModelCallback(weights_serialized):
-            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
+        def evaluateModelCallback(request):
+            weights = SerializationUtils.deserializeParameters(
+                request.parameters, sparse=request.sparse)
             eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 
@@ -46,13 +47,11 @@ class DFLv5Strategy(IDFLStrategy):
         return train_metrics
 
     def broadcast(self):
-        gradient_serialized = SerializationUtils.serializeGradient(self.computed_gradient)
-
         if(self.config["log_communication_flag"]):
             CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
                 {"size": self.computed_gradient.getSize(), "dtype": self.computed_gradient.getDTypeName()})
 
-        asyncio.run(self.broadcastGradientToNeighbors(gradient_serialized,
+        asyncio.run(self.broadcastGradientToNeighbors(self.computed_gradient,
             self.dataset.train.cardinality().numpy()))
 
     def aggregate(self):

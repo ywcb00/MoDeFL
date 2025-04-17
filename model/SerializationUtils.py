@@ -1,4 +1,5 @@
 from tffmodel.types.Gradient import Gradient
+from tffmodel.types.HeterogeneousDenseArray import HeterogeneousDenseArray
 from tffmodel.types.HeterogeneousSparseArray import HeterogeneousSparseArray
 from tffmodel.types.Weights import Weights
 
@@ -7,35 +8,19 @@ import pickle
 import tensorflow as tf
 
 class SerializationUtils:
-    @classmethod
-    def serializeModelWeights(self_class, weights):
-        return weights.serialize()
 
     @classmethod
-    def deserializeModelWeights(self_class, weights_serialized):
-        if(not weights_serialized):
+    def serializeParameters(self_class, parameters):
+        return parameters.serialize()
+
+    @classmethod
+    def deserializeParameters(self_class, serialized_parameters, sparse=False):
+        if(not serialized_parameters):
             return None
-        return Weights.deserialize(weights_serialized)
-
-    @classmethod
-    def serializeGradient(self_class, gradient):
-        return gradient.serialize()
-
-    @classmethod
-    def deserializeGradient(self_class, gradient_serialized):
-        if(not gradient_serialized):
-            return None
-        return Gradient.deserialize(gradient_serialized)
-
-    @classmethod
-    def serializeSparseGradient(self_class, sparse_gradient):
-        return sparse_gradient.serialize()
-
-    @classmethod
-    def deserializeSparseGradient(self_class, sparse_gradient_serialized):
-        if(not sparse_gradient_serialized):
-            return None
-        return HeterogeneousSparseArray.deserialize(sparse_gradient_serialized)
+        if(sparse):
+            return HeterogeneousSparseArray.deserialize(serialized_parameters)
+        else:
+            return HeterogeneousDenseArray.deserialize(serialized_parameters)
 
     @classmethod
     def serializeModel(self_class, model, optimizer):

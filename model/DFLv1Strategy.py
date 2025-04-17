@@ -19,8 +19,9 @@ class DFLv1Strategy(IDFLStrategy):
         def transferModelUpdateCallback(update, address):
             self.model_update_market.putUpdate(update, address)
 
-        def evaluateModelCallback(weights_serialized):
-            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
+        def evaluateModelCallback(request):
+            weights = SerializationUtils.deserializeParameters(
+                request.parameters, sparse=request.sparse)
             eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 
@@ -47,7 +48,6 @@ class DFLv1Strategy(IDFLStrategy):
     def broadcast(self):
         current_weights = self.keras_model.getWeights()
         model_delta = current_weights - self.previous_weights
-        model_delta_serialized = SerializationUtils.serializeModelWeights(model_delta)
 
         selected_neighbors = PartialDeviceParticipation.getNeighbors(self.config)
 
@@ -55,7 +55,7 @@ class DFLv1Strategy(IDFLStrategy):
             CommunicationLogger.logMultiple(self.config["address"], selected_neighbors,
                 {"size": model_delta.getSize(), "dtype": model_delta.getDTypeName()})
 
-        asyncio.run(self.broadcastWeightsToNeighbors(model_delta_serialized,
+        asyncio.run(self.broadcastWeightsToNeighbors(model_delta,
             self.dataset.train.cardinality().numpy(),
             selected_neighbors=selected_neighbors))
 

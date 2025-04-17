@@ -11,6 +11,7 @@ class PartitioningUtils:
 
     @classmethod
     def getParameterPartition(self_class, model_params, actor_idx, num_actors):
+        # NOTE: Assuming the same data type among all layers
         model_params_flattened = model_params.getFlattened()
         n = model_params_flattened.size
         n_part = (n // num_actors)

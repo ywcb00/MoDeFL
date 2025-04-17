@@ -42,18 +42,10 @@ class ModelUpdateMarket:
         return model_updates_dict
 
     def putUpdate(self, update, address):
-        weights = SerializationUtils.deserializeModelWeights(update.weights.weights)
-        gradient = SerializationUtils.deserializeGradient(update.gradient.gradient)
-        market_element = None if (not weights and not gradient) else {
-            "weights": weights, "gradient": gradient,
-            "aggregation_weight": update.aggregation_weight
-        }
-        self.put(market_element, address)
-
-    def putSparseUpdate(self, update, address):
-        # TODO: allow for sparse model weights
-        weights = SerializationUtils.deserializeModelWeights(update.weights.weights)
-        gradient = SerializationUtils.deserializeSparseGradient(update.gradient.gradient)
+        weights = SerializationUtils.deserializeParameters(
+            update.weights.parameters, sparse=update.weights.sparse)
+        gradient = SerializationUtils.deserializeParameters(
+            update.gradient.parameters, sparse=update.gradient.sparse)
         market_element = None if (not weights and not gradient) else {
             "weights": weights, "gradient": gradient,
             "aggregation_weight": update.aggregation_weight

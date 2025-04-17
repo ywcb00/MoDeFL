@@ -57,9 +57,10 @@ class Actor:
 
             self.logger.debug("Initialized the model.")
 
-        def initializeModelWeightsCallback(weights_serialized):
+        def initializeModelWeightsCallback(request):
             # deserialize and reshape the retrieved weights
-            init_weights = SerializationUtils.deserializeModelWeights(weights_serialized)
+            init_weights = SerializationUtils.deserializeParameters(
+                request.parameters, sparse=request.sparse)
             self.keras_model.setWeights(init_weights)
             self.logger.debug("Initialized the model weights.")
 

@@ -16,7 +16,7 @@ class Servicer(ModelUpdate_pb2_grpc.ModelUpdateServicer):
         return ModelUpdate_pb2.Ack()
 
     def EvaluateModel(self, request, context):
-        eval_metrics = self.callbacks["EvaluateModel"](request.weights)
+        eval_metrics = self.callbacks["EvaluateModel"](request)
         return ModelUpdate_pb2.EvaluationMetrics(
             metrics=[ModelUpdate_pb2.Metric(key=key, value=val)
                 for key, val in eval_metrics.items()])

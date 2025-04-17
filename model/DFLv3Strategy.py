@@ -42,8 +42,9 @@ class DFLv3Strategy(IDFLStrategy):
         def transferModelUpdateCallback(update, address):
             self.model_update_market.putUpdate(update, address)
 
-        def evaluateModelCallback(weights_serialized):
-            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
+        def evaluateModelCallback(request):
+            weights = SerializationUtils.deserializeParameters(
+                request.parameters, sparse=request.sparse)
             eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 
@@ -67,10 +68,6 @@ class DFLv3Strategy(IDFLStrategy):
         return train_metrics
 
     def broadcast(self):
-        model_parameters_serialized = SerializationUtils.serializeModelWeights(self.model_parameters)
-        gradient_predictions_serialized = dict(
-            [(addr, SerializationUtils.serializeGradient(pg)) for addr, pg in self.mewma.get().items()])
-
         if(self.config["log_communication_flag"]):
             CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
                 {"size": self.model_parameters.getSize(), "dtype": self.model_parameters.getDTypeName()})
@@ -79,7 +76,7 @@ class DFLv3Strategy(IDFLStrategy):
                     {"size": pg.getSize(), "dtype": pg.getDTypeName()})
 
         asyncio.run(self.broadcastWeightsAndGradientsToNeighbors(
-            model_parameters_serialized, gradient_predictions_serialized))
+            self.model_parameters, self.mewma.get()))
 
     def computeGradients(self, received_model_updates):
         comp_grad_model = self.keras_model.clone()

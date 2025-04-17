@@ -18,10 +18,11 @@ class DFLv7Strategy(IDFLStrategy):
 
     def startServer(self):
         def transferModelUpdateCallback(update, address):
-            self.model_update_market.putSparseUpdate(update, address)
+            self.model_update_market.putUpdate(update, address)
 
-        def evaluateModelCallback(weights_serialized):
-            weights = SerializationUtils.deserializeModelWeights(weights_serialized)
+        def evaluateModelCallback(request):
+            weights = SerializationUtils.deserializeParameters(
+                request.parameters, sparse=request.sparse)
             eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 
@@ -52,13 +53,12 @@ class DFLv7Strategy(IDFLStrategy):
         # TODO: set the hyperparameters for sparsification
         sparse_gradient = Compression.compress(
             self.computed_gradient, self.config)
-        sparse_gradient_serialized = SerializationUtils.serializeSparseGradient(sparse_gradient)
 
         if(self.config["log_communication_flag"]):
             CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
                 {"size": sparse_gradient.getSize(), "dtype": sparse_gradient.getDTypeName()})
 
-        asyncio.run(self.broadcastGradientToNeighbors(sparse_gradient_serialized,
+        asyncio.run(self.broadcastGradientToNeighbors(sparse_gradient,
             self.dataset.train.cardinality().numpy()))
 
     def aggregate(self):

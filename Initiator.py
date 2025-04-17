@@ -45,8 +45,8 @@ class Initiator:
             await stub.InitModel(Initialization_pb2.Model(
                 model_config=model_config_serialized, optimizer_config=optimizer_config_serialized))
 
-            await stub.InitModelWeights(ModelUpdate_pb2.ModelWeights(
-                weights=init_weights_serialized))
+            await stub.InitModelWeights(ModelUpdate_pb2.ModelParameters(
+                sparse=False, parameters=init_weights_serialized))
 
             await stub.InitLearningStrategy(Initialization_pb2.LearningStrategy(
                 learning_type_id=self.config["learning_type"].value,
@@ -88,7 +88,7 @@ class Initiator:
             model, actor_optimizer)
 
         init_weights = Weights(model.get_weights())
-        init_weights_serialized = SerializationUtils.serializeModelWeights(init_weights)
+        init_weights_serialized = SerializationUtils.serializeParameters(init_weights)
 
         tasks = []
         for actor_idx, addr in enumerate(addresses):
