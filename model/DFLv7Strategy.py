@@ -4,7 +4,6 @@ from model.SerializationUtils import SerializationUtils
 from network.Compression import Compression
 from network.ModelUpdateService import ModelUpdateService
 from tffmodel.KerasModel import KerasModel
-from utils.CommunicationLogger import CommunicationLogger
 
 import asyncio
 import logging
@@ -51,14 +50,7 @@ class DFLv7Strategy(IDFLStrategy):
 
     def broadcast(self):
         # TODO: set the hyperparameters for sparsification
-        sparse_gradient = Compression.compress(
-            self.computed_gradient, self.config)
-
-        if(self.config["log_communication_flag"]):
-            CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
-                {"size": sparse_gradient.getSize(), "dtype": sparse_gradient.getDTypeName()})
-
-        asyncio.run(self.broadcastGradientToNeighbors(sparse_gradient,
+        asyncio.run(self.broadcastGradientToNeighbors(self.computed_gradient,
             self.dataset.train.cardinality().numpy()))
 
     def aggregate(self):

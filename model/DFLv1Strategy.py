@@ -2,9 +2,7 @@ from model.AggregationUtils import AggregationUtils
 from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
-from network.PartialDeviceParticipation import PartialDeviceParticipation
 from tffmodel.KerasModel import KerasModel
-from utils.CommunicationLogger import CommunicationLogger
 
 import asyncio
 import logging
@@ -49,15 +47,8 @@ class DFLv1Strategy(IDFLStrategy):
         current_weights = self.keras_model.getWeights()
         model_delta = current_weights - self.previous_weights
 
-        selected_neighbors = PartialDeviceParticipation.getNeighbors(self.config)
-
-        if(self.config["log_communication_flag"]):
-            CommunicationLogger.logMultiple(self.config["address"], selected_neighbors,
-                {"size": model_delta.getSize(), "dtype": model_delta.getDTypeName()})
-
         asyncio.run(self.broadcastWeightsToNeighbors(model_delta,
-            self.dataset.train.cardinality().numpy(),
-            selected_neighbors=selected_neighbors))
+            self.dataset.train.cardinality().numpy()))
 
     def aggregate(self):
         current_model_delta = self.keras_model.getWeights() - self.previous_weights

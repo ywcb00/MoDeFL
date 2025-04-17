@@ -1,5 +1,7 @@
 from model.ModelUpdateMarket import ModelUpdateMarket
 from model.SerializationUtils import SerializationUtils
+from network.Compression import Compression
+from network.PartialDeviceParticipation import PartialDeviceParticipation
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 import network.protos.ModelUpdate_pb2_grpc as ModelUpdate_pb2_grpc
 from tffmodel.KerasModel import KerasModel
@@ -36,15 +38,22 @@ class IDFLStrategy(ABC):
                     aggregation_weight=aggregation_weight),
                 identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
-    async def broadcastWeightsToNeighbors(self, weights,
-        aggregation_weight=0, selected_neighbors=None):
+    async def broadcastWeightsToNeighbors(self, weights, aggregation_weight=0):
+        # apply compression by the specified compression method
+        weights = Compression.compress(weights, self.config)
+
         weights_serialized = weights.serialize()
         weights_sparse = weights.is_sparse
+
         # neighbors are selected by partial device participation strategy
-        if(selected_neighbors == None):
-            selected_neighbors = self.config["neighbors"]
-        tasks = []
+        selected_neighbors = PartialDeviceParticipation.getNeighbors(self.config)
+
         self.logger.debug(f'Broadcasting updates to {len(selected_neighbors)} neighboring actors.')
+        if(self.config["log_communication_flag"]):
+            CommunicationLogger.logMultiple(self.config["address"], selected_neighbors,
+                {"size": weights.getSize(), "dtype": weights.getDTypeName()})
+
+        tasks = []
         for addr in self.config["neighbors"]:
             if addr in selected_neighbors:
                 tasks.append(asyncio.create_task(self.broadcastWeightsTo(
@@ -56,14 +65,31 @@ class IDFLStrategy(ABC):
 
     async def broadcastWeightPartitions(self, weights_partitioned,
         aggregation_weight=0):
+        # apply compression by the specified compression method
+        weights_partitioned = {addr: Compression.compress(weights, self.config)
+            for addr, weights in weights_partitioned.items()}
+
         weights_partitioned_serialized = {addr: weights.serialize()
             for addr, weights in weights_partitioned.items()}
         weights_partitioned_sparse = {addr: weights.is_sparse
             for addr, weights in weights_partitioned.items()}
+
+        selected_neighbors = PartialDeviceParticipation.getNeighbors(self.config)
+
+        if(self.config["log_communication_flag"]):
+            for addr, weights in weights_partitioned.items():
+                if addr in selected_neighbors:
+                    CommunicationLogger.log(self.config["address"], addr,
+                        {"size": weights.getSize(), "dtype": weights.getDTypeName()})
+
         tasks = list()
         for addr, weights_serialized in weights_partitioned_serialized.items():
-            tasks.append(asyncio.create_task(self.broadcastWeightsTo(
-                weights_serialized, weights_partitioned_sparse[addr], addr, aggregation_weight)))
+            if addr in selected_neighbors:
+                tasks.append(asyncio.create_task(self.broadcastWeightsTo(
+                    weights_serialized, weights_partitioned_sparse[addr], addr, aggregation_weight)))
+            else:
+                tasks.append(asyncio.create_task(self.broadcastWeightsTo(
+                    None, weights_partitioned_sparse[addr], addr, aggregation_weight)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
     async def broadcastWeightsAndGradientTo(self, weights_serialized, weights_sparse,
@@ -80,22 +106,36 @@ class IDFLStrategy(ABC):
                 identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
     async def broadcastWeightsAndGradientsToNeighbors(self, weights,
-        gradients, aggregation_weight=0, selected_neighbors=None):
+        gradient_dict, aggregation_weight=0):
+        # apply compression by the specified compression method
+        weights = Compression.compress(weights, self.config)
+        gradient_dict = {addr: Compression.compress(grad, self.config)
+            for addr, grad in gradient_dict.items()}
+
         weights_serialized = weights.serialize()
         weights_sparse = weights.is_sparse
-        gradients_serialized = dict(
-            [(addr, SerializationUtils.serializeParameters(grad)) for addr, grad in gradients.items()])
-        gradients_sparse = dict(
-            [(addr, grad.is_sparse) for addr, grad in gradients.items()])
-        if(selected_neighbors == None):
-            selected_neighbors = self.config["neighbors"]
+        gradient_serialized_dict = dict(
+            [(addr, SerializationUtils.serializeParameters(grad)) for addr, grad in gradient_dict.items()])
+        gradient_sparse_dict = dict(
+            [(addr, grad.is_sparse) for addr, grad in gradient_dict.items()])
+
+        selected_neighbors = PartialDeviceParticipation.getNeighbors(self.config)
+
+        if(self.config["log_communication_flag"]):
+            CommunicationLogger.logMultiple(self.config["address"], selected_neighbors,
+                {"size": weights.getSize(), "dtype": weights.getDTypeName()})
+            for addr, grad in gradient_dict.items():
+                if addr in selected_neighbors:
+                    CommunicationLogger.log(self.config["address"], addr,
+                        {"size": grad.getSize(), "dtype": grad.getDTypeName()})
+
         tasks = []
         self.logger.debug(f'Broadcasting updates to {len(selected_neighbors)} neighboring actors.')
         for addr in self.config["neighbors"]:
             if addr in selected_neighbors:
                 tasks.append(asyncio.create_task(self.broadcastWeightsAndGradientTo(
                     weights_serialized, weights_sparse,
-                    gradients_serialized[addr], gradients_sparse[addr],
+                    gradient_serialized_dict[addr], gradient_sparse_dict[addr],
                      addr, aggregation_weight)))
             else:
                 tasks.append(asyncio.create_task(self.broadcastWeightsAndGradientTo(
@@ -113,12 +153,19 @@ class IDFLStrategy(ABC):
                     aggregation_weight=aggregation_weight),
                 identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
-    async def broadcastGradientToNeighbors(self, gradient, aggregation_weight=0,
-        selected_neighbors=None):
+    async def broadcastGradientToNeighbors(self, gradient, aggregation_weight=0):
+        # apply compression by the specified compression method
+        gradient = Compression.compress(gradient, self.config)
+
         gradient_serialized = gradient.serialize()
         gradient_sparse = gradient.is_sparse
-        if(selected_neighbors == None):
-            selected_neighbors = self.config["neighbors"]
+
+        selected_neighbors = PartialDeviceParticipation.getNeighbors(self.config)
+
+        if(self.config["log_communication_flag"]):
+            CommunicationLogger.logMultiple(self.config["address"], selected_neighbors,
+                {"size": gradient.getSize(), "dtype": gradient.getDTypeName()})
+
         tasks = []
         self.logger.debug(f'Broadcasting updates to {len(selected_neighbors)} neighboring actors.')
         for addr in self.config["neighbors"]:

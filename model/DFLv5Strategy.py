@@ -3,7 +3,6 @@ from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
 from tffmodel.KerasModel import KerasModel
-from utils.CommunicationLogger import CommunicationLogger
 
 import asyncio
 import logging
@@ -47,10 +46,6 @@ class DFLv5Strategy(IDFLStrategy):
         return train_metrics
 
     def broadcast(self):
-        if(self.config["log_communication_flag"]):
-            CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
-                {"size": self.computed_gradient.getSize(), "dtype": self.computed_gradient.getDTypeName()})
-
         asyncio.run(self.broadcastGradientToNeighbors(self.computed_gradient,
             self.dataset.train.cardinality().numpy()))
 

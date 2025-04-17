@@ -3,7 +3,6 @@ from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
 from tffmodel.types.HeterogeneousDenseArray import HeterogeneousDenseArray
-from utils.CommunicationLogger import CommunicationLogger
 
 import asyncio
 import logging
@@ -68,13 +67,6 @@ class DFLv3Strategy(IDFLStrategy):
         return train_metrics
 
     def broadcast(self):
-        if(self.config["log_communication_flag"]):
-            CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
-                {"size": self.model_parameters.getSize(), "dtype": self.model_parameters.getDTypeName()})
-            for addr, pg in self.mewma.get().items():
-                CommunicationLogger.log(self.config["address"], addr,
-                    {"size": pg.getSize(), "dtype": pg.getDTypeName()})
-
         asyncio.run(self.broadcastWeightsAndGradientsToNeighbors(
             self.model_parameters, self.mewma.get()))
 

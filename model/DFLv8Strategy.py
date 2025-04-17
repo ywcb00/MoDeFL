@@ -6,7 +6,6 @@ from network.ModelUpdateService import ModelUpdateService
 from tffmodel.KerasModel import KerasModel
 from tffmodel.types.HeterogeneousDenseArray import HeterogeneousDenseArray
 from utils.PartitioningUtils import PartitioningUtils
-from utils.CommunicationLogger import CommunicationLogger
 
 import asyncio
 import logging
@@ -54,11 +53,6 @@ class DFLv8Strategy(DFLv1Strategy):
 
         model_delta_partitioned = PartitioningUtils.partitionModelParameters(model_delta, self.config)
 
-        if(self.config["log_communication_flag"]):
-            for addr, weights in model_delta_partitioned.items():
-                CommunicationLogger.log(self.config["address"], addr,
-                    {"size": weights.getSize(), "dtype": weights.getDTypeName()})
-
         asyncio.run(self.broadcastWeightPartitions(model_delta_partitioned,
             self.dataset.train.cardinality().numpy()))
 
@@ -75,10 +69,6 @@ class DFLv8Strategy(DFLv1Strategy):
         self.global_weight_partition = self.global_weight_partition + avg_model_deltas
 
     def broadcastGlobalWeightPartition(self):
-        if(self.config["log_communication_flag"]):
-            CommunicationLogger.logMultiple(self.config["address"], self.config["neighbors"],
-                {"size": self.global_weight_partition.getSize(), "dtype": self.global_weight_partition.getDTypeName()})
-
         asyncio.run(self.broadcastWeightsToNeighbors(self.global_weight_partition,
             aggregation_weight=GLOBAL_PARTITION_FLAG))
 
