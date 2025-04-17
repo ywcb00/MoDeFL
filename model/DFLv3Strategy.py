@@ -2,7 +2,7 @@ from model.AggregationUtils import AggregationUtils
 from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
-from tffmodel.types.Gradient import Gradient
+from tffmodel.types.HeterogeneousDenseArray import HeterogeneousDenseArray
 from utils.CommunicationLogger import CommunicationLogger
 
 import asyncio
@@ -14,7 +14,7 @@ class MultivariateExponentiallyWeightedMovingAverage:
     def __init__(self, neighbors, shape_gradient, a_ma):
         self.a_ma = a_ma
         self.predictions = dict(
-            [(addr, Gradient.getZero(shape_gradient)) for addr in neighbors])
+            [(addr, HeterogeneousDenseArray.getZero(shape_gradient)) for addr in neighbors])
 
     def get(self):
         return self.predictions

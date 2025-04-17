@@ -1,7 +1,5 @@
-from tffmodel.types.Gradient import Gradient
 from tffmodel.types.HeterogeneousDenseArray import HeterogeneousDenseArray
 from tffmodel.types.HeterogeneousSparseArray import HeterogeneousSparseArray
-from tffmodel.types.Weights import Weights
 
 import numpy as np
 import pickle

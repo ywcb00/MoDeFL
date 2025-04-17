@@ -4,7 +4,7 @@ from model.ModelUpdateMarket import ModelUpdateMarket
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
 from tffmodel.KerasModel import KerasModel
-from tffmodel.types.Weights import Weights
+from tffmodel.types.HeterogeneousDenseArray import HeterogeneousDenseArray
 from utils.PartitioningUtils import PartitioningUtils
 from utils.CommunicationLogger import CommunicationLogger
 
@@ -90,7 +90,7 @@ class DFLv8Strategy(DFLv1Strategy):
         partition_dict = {actor_idx_lookup_dict[addr]: elem["weights"] for addr, elem in received_model_partitions.items()}
         partition_dict[self.config["actor_idx"]] = self.global_weight_partition
         flattened_parameters = PartitioningUtils.joinParameterPartitions(partition_dict)
-        new_weights = Weights.fromFlattened(flattened_parameters, self.keras_model.getWeights())
+        new_weights = HeterogeneousDenseArray.fromFlattened(flattened_parameters, self.keras_model.getWeights())
 
         self.keras_model.setWeights(new_weights)
 

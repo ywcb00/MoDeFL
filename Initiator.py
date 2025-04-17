@@ -8,7 +8,7 @@ import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 from tffdataset.DatasetUtils import getDatasetElementSpec
 from tffmodel.KerasModel import KerasModel
 from tffmodel.ModelBuilderUtils import getFedLearningRateSchedules, getModelBuilder
-from tffmodel.types.Weights import Weights
+from tffmodel.types.HeterogeneousDenseArray import HeterogeneousDenseArray
 
 import asyncio
 import grpc
@@ -87,7 +87,7 @@ class Initiator:
         model_config_serialized, optimizer_config_serialized = SerializationUtils.serializeModel(
             model, actor_optimizer)
 
-        init_weights = Weights(model.get_weights())
+        init_weights = HeterogeneousDenseArray(model.get_weights())
         init_weights_serialized = SerializationUtils.serializeParameters(init_weights)
 
         tasks = []
