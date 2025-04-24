@@ -57,7 +57,7 @@ class DFLv7Strategy(IDFLStrategy):
         received_model_update_vals = self.model_update_market.get().values()
         model_gradients = [rmu["gradient"] for rmu in received_model_update_vals]
         aggregation_weights = [rmu["aggregation_weight"] for rmu in received_model_update_vals]
-        model_gradients = [Compression.compress(
+        model_gradients = [Compression.compressDecompress(
             self.computed_gradient, self.config), *model_gradients]
         aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
         avg_model_gradient = AggregationUtils.averageModelWeights(model_gradients, aggregation_weights)

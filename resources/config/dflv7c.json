@@ -1,0 +1,28 @@
+{
+    "seed": 13,
+
+    "dataset_id": 2,
+
+    "partitioning_scheme": 3,
+    "num_workers": 4,
+
+    "num_threads_server": 8,
+
+    "learning_type": 7,
+    "synchronization_strategy": 1,
+
+    "compression_type": 1,
+    "compression_precision": 4,
+
+    "num_fed_epochs": 5,
+    "num_local_epochs": 2,
+
+    "lr_client": 0.007,
+    "lr_server": 0.03,
+
+    "log_tensorboard_flag": 0,
+    "log_performance_flag": 1,
+    "log_communication_flag": 1,
+    "log_dir": "./log/dflv7c",
+    "log_level": 10
+}

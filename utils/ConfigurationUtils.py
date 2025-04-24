@@ -37,6 +37,7 @@ class ConfigurationUtils:
         "compression_type": CompressionType.NoneType,
         "compression_k": 100,
         "compression_percentage": 0.2,
+        "compression_precision": 8,
 
         "partialdeviceparticipation_strategy": PartialDeviceParticipationStrategy.NoneStrategy,
         "partialdeviceparticipation_k": 2,
@@ -114,7 +115,7 @@ class ConfigurationUtils:
             return value
         int_type_configs = ["seed", "num_workers", "num_threads_server",
             "num_fed_epochs", "num_local_epochs", "synchronization_strat_amount",
-            "compression_k", "partialdeviceparticipation_k", "log_level"]
+            "compression_k", "compression_precision", "partialdeviceparticipation_k", "log_level"]
         for itc in int_type_configs:
             if(itc in config.keys()):
                 config[itc] = convertInt(config[itc])

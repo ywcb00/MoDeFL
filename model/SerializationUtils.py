@@ -1,3 +1,4 @@
+from network.Compression import Compression
 from tffmodel.types.HeterogeneousDenseArray import HeterogeneousDenseArray
 from tffmodel.types.HeterogeneousSparseArray import HeterogeneousSparseArray
 
@@ -16,9 +17,13 @@ class SerializationUtils:
         if(not serialized_parameters):
             return None
         if(sparse):
-            return HeterogeneousSparseArray.deserialize(serialized_parameters)
+            data = HeterogeneousSparseArray.deserialize(serialized_parameters)
+            data = Compression.decompress(data) # decompress the data if compressed
+            return data
         else:
-            return HeterogeneousDenseArray.deserialize(serialized_parameters)
+            data = HeterogeneousDenseArray.deserialize(serialized_parameters)
+            data = Compression.decompress(data) # decompress the data if compressed
+            return data
 
     @classmethod
     def serializeModel(self_class, model, optimizer):
