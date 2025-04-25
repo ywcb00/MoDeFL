@@ -2,12 +2,12 @@ from model.AggregationUtils import AggregationUtils
 from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
-from tffmodel.KerasModel import KerasModel
 
 import asyncio
 import logging
 import numpy as np
 
+# FedNova
 class DFLv5Strategy(IDFLStrategy):
     def __init__(self, config, keras_model, dataset):
         super().__init__(config, keras_model, dataset)
@@ -15,18 +15,22 @@ class DFLv5Strategy(IDFLStrategy):
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
+        # callback for receiving a model update from an actor
         def transferModelUpdateCallback(update, address):
             self.model_update_market.putUpdate(update, address)
 
+        # callback for getting an evaluation request form an actor
         def evaluateModelCallback(request):
             weights = SerializationUtils.deserializeParameters(
                 request.parameters, sparse=request.sparse)
             eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 
+        # dictionary to track which neighboring actor has sent its last model update
         self.termination_permission = dict(
             [(addr, False) for addr in self.config["neighbors"]])
         self.termination_permission[self.config["address"]] = False
+        # callback for registering a termination permission from an actor
         def allowTerminationCallback(address):
             self.registerTerminationPermission(address)
 
@@ -46,8 +50,8 @@ class DFLv5Strategy(IDFLStrategy):
         return train_metrics
 
     def broadcast(self):
-        asyncio.run(self.broadcastGradientToNeighbors(self.computed_gradient,
-            self.dataset.train.cardinality().numpy()))
+        asyncio.run(self.broadcastParametersToNeighbors(gradient=self.computed_gradient,
+            aggregation_weight=self.dataset.train.cardinality().numpy()))
 
     def aggregate(self):
         received_model_update_vals = self.model_update_market.get().values()
@@ -64,6 +68,7 @@ class DFLv5Strategy(IDFLStrategy):
             aggregation_weights, tau_eff, self.config["lr_server"], a_values)
         self.keras_model.setWeights(new_weights)
 
+    # notify the neighbors about the completion and wait until this actor can terminate safely
     def stop(self):
         self.registerTerminationPermission(self.config["address"])
         asyncio.run(self.signalTerminationPermission())

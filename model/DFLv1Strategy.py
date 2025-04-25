@@ -7,6 +7,7 @@ from tffmodel.KerasModel import KerasModel
 import asyncio
 import logging
 
+# FedAvg
 class DFLv1Strategy(IDFLStrategy):
     def __init__(self, config, keras_model, dataset):
         super().__init__(config, keras_model, dataset)
@@ -14,18 +15,22 @@ class DFLv1Strategy(IDFLStrategy):
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
+        # callback for receiving a model update from an actor
         def transferModelUpdateCallback(update, address):
             self.model_update_market.putUpdate(update, address)
 
+        # callback for getting an evaluation request form an actor
         def evaluateModelCallback(request):
             weights = SerializationUtils.deserializeParameters(
                 request.parameters, sparse=request.sparse)
             eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 
+        # dictionary to track which neighboring actor has sent its last model update
         self.termination_permission = dict(
             [(addr, False) for addr in self.config["neighbors"]])
         self.termination_permission[self.config["address"]] = False
+        # callback for registering a termination permission from an actor
         def allowTerminationCallback(address):
             self.registerTerminationPermission(address)
 
@@ -47,21 +52,21 @@ class DFLv1Strategy(IDFLStrategy):
         current_weights = self.keras_model.getWeights()
         model_delta = current_weights - self.previous_weights
 
-        asyncio.run(self.broadcastWeightsToNeighbors(model_delta,
-            self.dataset.train.cardinality().numpy()))
+        asyncio.run(self.broadcastParametersToNeighbors(weights=model_delta,
+            aggregation_weight=self.dataset.train.cardinality().numpy()))
 
     def aggregate(self):
         current_model_delta = self.keras_model.getWeights() - self.previous_weights
         received_model_updates_vals = self.model_update_market.get().values()
         model_deltas = [rmu["weights"] for rmu in received_model_updates_vals]
         aggregation_weights = [rmu["aggregation_weight"] for rmu in received_model_updates_vals]
-        # model_deltas, aggregation_weights = zip(*list(model_deltas_and_weight.values()))
         model_deltas = [current_model_delta, *model_deltas]
         aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
-        avg_model_deltas = AggregationUtils.averageModelWeights(model_deltas, aggregation_weights)
+        avg_model_deltas = AggregationUtils.averageModelParameters(model_deltas, aggregation_weights)
         new_weights = self.previous_weights + avg_model_deltas
         self.keras_model.setWeights(new_weights)
 
+    # notify the neighbors about the completion and wait until this actor can terminate safely
     def stop(self):
         self.registerTerminationPermission(self.config["address"])
         asyncio.run(self.signalTerminationPermission())

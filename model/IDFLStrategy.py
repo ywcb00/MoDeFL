@@ -20,49 +20,71 @@ class IDFLStrategy(ABC):
         self.model_update_market = ModelUpdateMarket(self.config)
         self.dataset = dataset
 
+    # define the required callbacks for the service and start the model update service
     @abstractmethod
     def startServer(self):
         pass
 
+    # train the local model on the local data
     @abstractmethod
     def fitLocal(self):
         pass
 
-    async def broadcastWeightsTo(self, weights_serialized, weights_sparse, address, aggregation_weight=0):
+    # construct the model update message and broadcast it to the specified address
+    async def broadcastParametersTo(self, address, weights_serialized=None, weights_sparse=None,
+        gradient_serialized=None, gradient_sparse=None, aggregation_weight=0):
         async with grpc.aio.insecure_channel(address) as channel:
+            weights_msg = ModelUpdate_pb2.ModelParameters(sparse=weights_sparse,
+                parameters=weights_serialized) if weights_serialized else None
+            gradient_msg = ModelUpdate_pb2.ModelParameters(sparse=gradient_sparse,
+                parameters=gradient_serialized) if gradient_serialized else None
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
             await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
                 update=ModelUpdate_pb2.ModelParameterUpdate(
-                    weights=ModelUpdate_pb2.ModelParameters(
-                        sparse=weights_sparse, parameters=weights_serialized),
+                    weights=weights_msg,
+                    gradient=gradient_msg,
                     aggregation_weight=aggregation_weight),
                 identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
 
-    async def broadcastWeightsToNeighbors(self, weights, aggregation_weight=0):
-        # apply compression by the specified compression method
-        weights = Compression.compress(weights, self.config)
-
-        weights_serialized = weights.serialize()
-        weights_sparse = weights.is_sparse
-
+    # broadcast the model update to the neighboring actors
+    async def broadcastParametersToNeighbors(self, weights=None, gradient=None, aggregation_weight=0):
         # neighbors are selected by partial device participation strategy
         selected_neighbors = PartialDeviceParticipation.getNeighbors(self.config)
 
-        self.logger.debug(f'Broadcasting updates to {len(selected_neighbors)} neighboring actors.')
-        if(self.config["log_communication_flag"]):
-            CommunicationLogger.logMultiple(self.config["address"], selected_neighbors,
-                {"size": weights.getSize(), "dtype": weights.getDTypeName()})
+        weights_serialized = None
+        weights_sparse = None
+        gradient_serialized = None
+        gradient_sparse = None
+        if(weights):
+            # apply compression by the specified compression method
+            weights = Compression.compress(weights, self.config)
+            weights_serialized = weights.serialize()
+            weights_sparse = weights.is_sparse
+            if(self.config["log_communication_flag"]):
+                CommunicationLogger.logMultiple(self.config["address"], selected_neighbors,
+                    {"size": weights.getSize(), "dtype": weights.getDTypeName()})
+        if(gradient):
+            # apply compression by the specified compression method
+            gradient = Compression.compress(gradient, self.config)
+            gradient_serialized = gradient.serialize()
+            gradient_sparse = gradient.is_sparse
+            if(self.config["log_communication_flag"]):
+                CommunicationLogger.logMultiple(self.config["address"], selected_neighbors,
+                    {"size": gradient.getSize(), "dtype": gradient.getDTypeName()})
 
         tasks = []
+        self.logger.debug(f'Broadcasting updates to {len(selected_neighbors)} neighboring actors.')
         for addr in self.config["neighbors"]:
             if addr in selected_neighbors:
-                tasks.append(asyncio.create_task(self.broadcastWeightsTo(
-                    weights_serialized, weights_sparse, addr, aggregation_weight)))
+                tasks.append(asyncio.create_task(self.broadcastParametersTo(addr,
+                    weights_serialized=weights_serialized, weights_sparse=weights_sparse,
+                    gradient_serialized=gradient_serialized, gradient_sparse=gradient_sparse,
+                    aggregation_weight=aggregation_weight)))
             else: # send an empty model update message to excluded neighbors
-                tasks.append(asyncio.create_task(self.broadcastWeightsTo(
-                    None, weights_sparse, addr)))
+                tasks.append(asyncio.create_task(self.broadcastParametersTo(addr)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
+    # broadcast the partitions of a partitioned model to the respective actors
     async def broadcastWeightPartitions(self, weights_partitioned,
         aggregation_weight=0):
         # apply compression by the specified compression method
@@ -85,26 +107,15 @@ class IDFLStrategy(ABC):
         tasks = list()
         for addr, weights_serialized in weights_partitioned_serialized.items():
             if addr in selected_neighbors:
-                tasks.append(asyncio.create_task(self.broadcastWeightsTo(
-                    weights_serialized, weights_partitioned_sparse[addr], addr, aggregation_weight)))
-            else:
-                tasks.append(asyncio.create_task(self.broadcastWeightsTo(
-                    None, weights_partitioned_sparse[addr], addr, aggregation_weight)))
+                tasks.append(asyncio.create_task(self.broadcastParametersTo(addr,
+                    weights_serialized=weights_serialized,
+                    weights_sparse=weights_partitioned_sparse[addr],
+                    aggregation_weight=aggregation_weight)))
+            else: # send an empty model update message to excluded neighbors
+                tasks.append(asyncio.create_task(self.broadcastParametersTo(addr)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
-    async def broadcastWeightsAndGradientTo(self, weights_serialized, weights_sparse,
-        gradient_serialized, gradient_sparse, address, aggregation_weight=0):
-        async with grpc.aio.insecure_channel(address) as channel:
-            stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
-            await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
-                update=ModelUpdate_pb2.ModelParameterUpdate(
-                    weights=ModelUpdate_pb2.ModelParameters(
-                        sparse=weights_sparse, parameters=weights_serialized),
-                    gradient=ModelUpdate_pb2.ModelParameters(
-                        sparse=gradient_sparse, parameters=gradient_serialized),
-                    aggregation_weight=aggregation_weight),
-                identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
-
+    # broadcast weights and individual gradients to the neighboring actors
     async def broadcastWeightsAndGradientsToNeighbors(self, weights,
         gradient_dict, aggregation_weight=0):
         # apply compression by the specified compression method
@@ -133,54 +144,22 @@ class IDFLStrategy(ABC):
         self.logger.debug(f'Broadcasting updates to {len(selected_neighbors)} neighboring actors.')
         for addr in self.config["neighbors"]:
             if addr in selected_neighbors:
-                tasks.append(asyncio.create_task(self.broadcastWeightsAndGradientTo(
-                    weights_serialized, weights_sparse,
-                    gradient_serialized_dict[addr], gradient_sparse_dict[addr],
-                     addr, aggregation_weight)))
-            else:
-                tasks.append(asyncio.create_task(self.broadcastWeightsAndGradientTo(
-                    None, weights_sparse, None, False, addr)))
+                tasks.append(asyncio.create_task(self.broadcastParametersTo(addr,
+                    weights_serialized=weights_serialized,
+                    weights_sparse=weights_sparse,
+                    gradient_serialized=gradient_serialized_dict[addr],
+                    gradient_sparse=gradient_sparse_dict[addr],
+                    aggregation_weight=aggregation_weight)))
+            else: # send an empty model update message to excluded neighbors
+                tasks.append(asyncio.create_task(self.broadcastParametersTo(addr)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
-    async def broadcastGradientTo(self, gradient_serialized, gradient_sparse,
-        address, aggregation_weight=0):
-        async with grpc.aio.insecure_channel(address) as channel:
-            stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
-            await stub.TransferModelUpdate(ModelUpdate_pb2.ModelUpdateMessage(
-                update=ModelUpdate_pb2.ModelParameterUpdate(
-                    gradient=ModelUpdate_pb2.ModelParameters(
-                        sparse=gradient_sparse, parameters=gradient_serialized),
-                    aggregation_weight=aggregation_weight),
-                identity=ModelUpdate_pb2.NetworkIdentity(ip_and_port=self.config["address"])))
-
-    async def broadcastGradientToNeighbors(self, gradient, aggregation_weight=0):
-        # apply compression by the specified compression method
-        gradient = Compression.compress(gradient, self.config)
-
-        gradient_serialized = gradient.serialize()
-        gradient_sparse = gradient.is_sparse
-
-        selected_neighbors = PartialDeviceParticipation.getNeighbors(self.config)
-
-        if(self.config["log_communication_flag"]):
-            CommunicationLogger.logMultiple(self.config["address"], selected_neighbors,
-                {"size": gradient.getSize(), "dtype": gradient.getDTypeName()})
-
-        tasks = []
-        self.logger.debug(f'Broadcasting updates to {len(selected_neighbors)} neighboring actors.')
-        for addr in self.config["neighbors"]:
-            if addr in selected_neighbors:
-                tasks.append(asyncio.create_task(self.broadcastGradientTo(
-                    gradient_serialized, gradient_sparse, addr, aggregation_weight)))
-            else:
-                tasks.append(asyncio.create_task(self.broadcastGradientTo(
-                    None, gradient_sparse, addr)))
-        await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
-
+    # model update exchange step of the actor
     @abstractmethod
     def broadcast(self):
         pass
 
+    # aggregation step of the actor
     @abstractmethod
     def aggregate(self):
         pass
@@ -227,17 +206,20 @@ class IDFLStrategy(ABC):
             self.keras_model.getModel(), self.dataset.val)
         return eval_metrics
 
+    # register the termination permission of a neighboring actor
     def registerTerminationPermission(self, address):
         self.termination_permission[address] = True
         if(all(self.termination_permission.values())):
             self.model_update_service.stopServer()
 
+    # notify the specified neighboring actor that we are ready to terminate
     async def signalTerminationPermissionTo(self, address):
         async with grpc.aio.insecure_channel(address) as channel:
             stub = ModelUpdate_pb2_grpc.ModelUpdateStub(channel)
             await stub.AllowTermination(ModelUpdate_pb2.NetworkIdentity(
                 ip_and_port=self.config["address"]))
 
+    # notify all neighboring actors that we are ready to terminate
     async def signalTerminationPermission(self):
         tasks = []
         for addr in self.config["neighbors"]:
@@ -248,6 +230,7 @@ class IDFLStrategy(ABC):
     def stop(self):
         pass
 
+    # general training loop
     def performTraining(self):
         self.startServer()
 

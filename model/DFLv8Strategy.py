@@ -22,21 +22,25 @@ class DFLv8Strategy(DFLv1Strategy):
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
+        # callback for receiving a model update from an actor
         def transferModelUpdateCallback(update, address):
             if(update.aggregation_weight == GLOBAL_PARTITION_FLAG):
                 self.model_partition_market.putUpdate(update, address)
             else:
                 self.model_update_market.putUpdate(update, address)
 
+        # callback for getting an evaluation request form an actor
         def evaluateModelCallback(request):
             weights = SerializationUtils.deserializeParameters(
                 request.parameters, sparse=request.sparse)
             eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 
+        # dictionary to track which neighboring actor has sent its last model update
         self.termination_permission = dict(
             [(addr, False) for addr in self.config["neighbors"]])
         self.termination_permission[self.config["address"]] = False
+        # callback for registering a termination permission from an actor
         def allowTerminationCallback(address):
             self.registerTerminationPermission(address)
 
@@ -65,11 +69,11 @@ class DFLv8Strategy(DFLv1Strategy):
         aggregation_weights = [rmu["aggregation_weight"] for rmu in received_model_update_vals]
         model_deltas = [current_model_delta, *model_deltas]
         aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
-        avg_model_deltas = AggregationUtils.averageModelWeights(model_deltas, aggregation_weights)
+        avg_model_deltas = AggregationUtils.averageModelParameters(model_deltas, aggregation_weights)
         self.global_weight_partition = self.global_weight_partition + avg_model_deltas
 
     def broadcastGlobalWeightPartition(self):
-        asyncio.run(self.broadcastWeightsToNeighbors(self.global_weight_partition,
+        asyncio.run(self.broadcastParametersToNeighbors(weights=self.global_weight_partition,
             aggregation_weight=GLOBAL_PARTITION_FLAG))
 
     def setLocalWeights(self):

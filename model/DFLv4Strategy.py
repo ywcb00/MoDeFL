@@ -20,6 +20,7 @@ class FedProxRegularizer(tf.keras.regularizers.Regularizer):
     # def from_config(self_class, config):
     #     return self_class(config["mu"], config["global_w"])
 
+# FedProx
 class DFLv4Strategy(DFLv1Strategy):
     def __init__(self, config, keras_model, dataset):
         super().__init__(config, keras_model, dataset)

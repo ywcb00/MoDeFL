@@ -25,6 +25,7 @@ class MultivariateExponentiallyWeightedMovingAverage:
         self.predictions = new_predictions
         return new_predictions
 
+# Consensus-based Federated Averaging w/ Gradient Exchange
 class DFLv3Strategy(IDFLStrategy):
     def __init__(self, config, keras_model, dataset):
         super().__init__(config, keras_model, dataset)
@@ -38,18 +39,22 @@ class DFLv3Strategy(IDFLStrategy):
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
+        # callback for receiving a model update from an actor
         def transferModelUpdateCallback(update, address):
             self.model_update_market.putUpdate(update, address)
 
+        # callback for getting an evaluation request form an actor
         def evaluateModelCallback(request):
             weights = SerializationUtils.deserializeParameters(
                 request.parameters, sparse=request.sparse)
             eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 
+        # dictionary to track which neighboring actor has sent its last model update
         self.termination_permission = dict(
             [(addr, False) for addr in self.config["neighbors"]])
         self.termination_permission[self.config["address"]] = False
+        # callback for registering a termination permission from an actor
         def allowTerminationCallback(address):
             self.registerTerminationPermission(address)
 
@@ -96,6 +101,7 @@ class DFLv3Strategy(IDFLStrategy):
         self.mewma.predict(computed_gradients)
         self.keras_model.setWeights(adjusted_model_parameters)
 
+    # notify the neighbors about the completion and wait until this actor can terminate safely
     def stop(self):
         self.registerTerminationPermission(self.config["address"])
         asyncio.run(self.signalTerminationPermission())

@@ -7,6 +7,7 @@ from tffmodel.KerasModel import KerasModel
 import asyncio
 import logging
 
+# Consensus-based Federated Averaging
 class DFLv2Strategy(IDFLStrategy):
     def __init__(self, config, keras_model, dataset):
         super().__init__(config, keras_model, dataset)
@@ -14,18 +15,22 @@ class DFLv2Strategy(IDFLStrategy):
         self.logger.setLevel(config["log_level"])
 
     def startServer(self):
+        # callback for receiving a model update from an actor
         def transferModelUpdateCallback(update, address):
             self.model_update_market.putUpdate(update, address)
 
+        # callback for getting an evaluation request form an actor
         def evaluateModelCallback(request):
             weights = SerializationUtils.deserializeParameters(
                 request.parameters, sparse=request.sparse)
             eval_metrics = self.evaluateWeights(weights)
             return eval_metrics
 
+        # dictionary to track which neighboring actor has sent its last model update
         self.termination_permission = dict(
             [(addr, False) for addr in self.config["neighbors"]])
         self.termination_permission[self.config["address"]] = False
+        # callback for registering a termination permission from an actor
         def allowTerminationCallback(address):
             self.registerTerminationPermission(address)
 
@@ -44,8 +49,7 @@ class DFLv2Strategy(IDFLStrategy):
 
     def broadcast(self):
         weights = self.keras_model.getWeights()
-
-        asyncio.run(self.broadcastWeightsToNeighbors(weights))
+        asyncio.run(self.broadcastParametersToNeighbors(weights=weights))
 
     def aggregate(self):
         # TODO: set the hyperparameters eps_t and alph_t (i.e., consensus step-size and mixing weights)
@@ -58,6 +62,7 @@ class DFLv2Strategy(IDFLStrategy):
             current_weights, received_model_weights, eps_t, alph_t)
         self.keras_model.setWeights(new_weights)
 
+    # notify the neighbors about the completion and wait until this actor can terminate safely
     def stop(self):
         self.registerTerminationPermission(self.config["address"])
         asyncio.run(self.signalTerminationPermission())

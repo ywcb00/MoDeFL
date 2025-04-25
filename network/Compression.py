@@ -16,6 +16,8 @@ class CompressionType(Enum):
 class Compression:
     @classmethod
     def compress(self_class, data, config):
+        if(not data):
+            return None
         if(not isinstance(data, HeterogeneousArray)):
             raise RuntimeError(f'Compression is only supported for objects of type {HeterogeneousArray.__name__}.')
         match config["compression_type"]:
@@ -33,6 +35,8 @@ class Compression:
     @classmethod
     def decompress(self_class, data):
         # NOTE: all relevant information for decompression must be stored in data.compression_properties
+        if(not data):
+            return None
         if(not isinstance(data, HeterogeneousArray)):
             raise RuntimeError(f'Compression is only supported for objects of type {HeterogeneousArray.__name__}.')
         compression_properties = data.getCompressionProperties()
