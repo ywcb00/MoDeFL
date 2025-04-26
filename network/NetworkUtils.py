@@ -1,6 +1,7 @@
 import numpy as np
 
 class NetworkUtils:
+    # obtain the neighbor addresses for a particular actor based on the adjacency matrix
     @classmethod
     def getNeighborIdentities(self_class, current_addr, addresses, adj_mat):
         current_idx = addresses.index(current_addr)

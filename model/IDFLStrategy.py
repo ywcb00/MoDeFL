@@ -238,6 +238,7 @@ class IDFLStrategy(ABC):
         for epoch in range(int(self.config["num_fed_epochs"])):
             self.logger.debug(f'Federated epoch #{epoch}')
 
+            # train the local model
             train_metrics = self.fitLocal()
             if(self.config['log_performance_flag'] and train_metrics):
                 metric_keys = list(train_metrics.keys())
@@ -248,14 +249,18 @@ class IDFLStrategy(ABC):
                 else:
                     PerformanceLogger.log(f'{self.config["log_dir"]}/local/train', dict(zip(metric_keys, list(train_metrics.values()))))
 
+            # evaluate the local model
             eval_metrics = self.evaluate()
             if(self.config['log_performance_flag']):
                 PerformanceLogger.log(f'{self.config["log_dir"]}/local/eval', eval_metrics)
 
+            # send model update to neighboring actors
             self.broadcast()
 
+            # aggregate model updates received from neighboring actors and update local model
             self.aggregate()
 
+            # evaluate the local model on the neighboring actors
             eval_avg = self.evaluateNeighbors()
             if(self.config['log_performance_flag']):
                 PerformanceLogger.log(f'{self.config["log_dir"]}/neighbors/eval', eval_avg)

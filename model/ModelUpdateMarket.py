@@ -5,6 +5,7 @@ from queue import SimpleQueue
 
 from model.SerializationUtils import SerializationUtils
 
+# determine the strategy for obtaining the model updates from the market
 class SynchronizationStrategy(Enum):
     ONE_FROM_EACH = 1
     AVAILABLE = 2
@@ -13,13 +14,16 @@ class SynchronizationStrategy(Enum):
     MIN_K = 5
     ONE_FROM_EACH_T = 6
 
+# market to store incoming model updates and retrieve them with a prespecified strategy when needed
 class ModelUpdateMarket:
     def __init__(self, config):
         self.config = config
         self.config.setdefault("synchronization_strategy", SynchronizationStrategy.ONE_FROM_EACH)
+        # store a queue of model updates for each neighboring actor
         self.model_updates = dict(
             [(addr, SimpleQueue()) for addr in config["neighbors"]])
 
+    # obtain the model updates using the prespecified synchronization strategy
     def get(self):
         model_updates_dict = None
         match self.config["synchronization_strategy"]:
@@ -41,6 +45,7 @@ class ModelUpdateMarket:
         model_updates_dict = {key: val for key, val in model_updates_dict.items() if val}
         return model_updates_dict
 
+    # put a model update into the market
     def putUpdate(self, update, address):
         weights = SerializationUtils.deserializeParameters(
             update.weights.parameters, sparse=update.weights.sparse)

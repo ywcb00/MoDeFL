@@ -13,7 +13,9 @@ class CompressionType(Enum):
     SPARSIFY_LAYERWISE_TOPK = 101
     SPARSIFY_LAYERWISE_PERCENTAGE = 102
 
+# static class with methods for compressing and decompressing model parameters of type HeterogeneousArray
 class Compression:
+    # proxy the call to the compression type specified in the configuration
     @classmethod
     def compress(self_class, data, config):
         if(not data):
@@ -32,6 +34,7 @@ class Compression:
             case _:
                 raise NotImplementedError
 
+    # proxy the call to the compression type specified in the configuration
     @classmethod
     def decompress(self_class, data):
         # NOTE: all relevant information for decompression must be stored in data.compression_properties
@@ -54,12 +57,14 @@ class Compression:
             case _:
                 raise NotImplementedError
 
+    # compress and directly decompress parameters to simulate information loss by compression
     @classmethod
     def compressDecompress(self_class, data, config):
         compressed_data = self_class.compress(data, config)
         decompressed_data = self_class.decompress(data)
         return decompressed_data
 
+# select the numpy type for binning/quantization based on the specified precision
 def getNumpyTypeForPrecision(precision):
     # NOTE: We only support predefined numpy uint types yet
     if(precision <= 8):
@@ -73,8 +78,9 @@ def getNumpyTypeForPrecision(precision):
     else:
         raise NotImplementedError
 
+# static class for quantization methods
 class Quantization(Compression):
-    # Quantize the data to the specified precision (bits) by probabilisticly rounding down/up
+    # quantize the data to the specified precision (bits) by probabilisticly rounding down/up
     @classmethod
     def quantizeProbabilistic(self_class, data, precision, seed):
         offset = data.min()
@@ -98,6 +104,7 @@ class Quantization(Compression):
 
         return quantized_data
 
+    # scale the data back to the original range
     @classmethod
     def dequantizeProbabilistic(self_class, data, compression_properties):
         data.setDType(compression_properties["source_dtype"])
@@ -113,8 +120,9 @@ def getTopKIndices(arr, k):
     sorted_idx = np.argpartition(np.absolute(arr), len(arr)-k)[-k:]
     return sorted_idx
 
+# static class for sparsification methods
 class Sparsification(Compression):
-    # Keep only the K highest values per layer, set the others to zero
+    # keep only the K highest values per layer, set the others to zero
     @classmethod
     def sparsifyLayerwiseTopK(self_class, data, k):
         layerwise_topk_indices = [getTopKIndices(layer.flatten(), k) for layer in data]
@@ -126,7 +134,7 @@ class Sparsification(Compression):
         sparse_data = data.sparsify(masks)
         return sparse_data
 
-    # Keep the specified percentage of highest values per layer, set the others to zero
+    # keep the specified percentage of highest values per layer, set the others to zero
     @classmethod
     def sparsifyLayerwisePercentage(self_class, data, percentage):
         layerwise_percentage_indices = [getTopKIndices(

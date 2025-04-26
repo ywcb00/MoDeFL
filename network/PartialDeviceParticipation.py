@@ -5,7 +5,9 @@ class PartialDeviceParticipationStrategy(Enum):
     NoneStrategy = 0 # do not apply partial device participation
     RandomK = 1
 
+# static class for partial device participation strategies
 class PartialDeviceParticipation:
+    # proxy the call according to the specified strategy
     @classmethod
     def getNeighbors(self_class, config):
         match config["partialdeviceparticipation_strategy"]:
@@ -17,6 +19,7 @@ class PartialDeviceParticipation:
             case _:
                 raise NotImplementedError
 
+    # randomly select the specified number of neighbors
     @classmethod
     def randomK(self_class, neighbor_candidates, k):
         # TODO: define seed for randomness, but cannot define here as we do not

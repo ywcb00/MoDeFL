@@ -11,24 +11,29 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
     def __init__(self, callbacks):
         self.callbacks = callbacks
 
+    # inform the actor about its public network address and its actor index in the system
     def InitIdentity(self, request, context):
         self.callbacks["InitIdentity"](request.net_id.ip_and_port,
             request.net_id.actor_idx, request.num_workers)
         return ModelUpdate_pb2.Ack()
 
+    # inform the actor which dataset to load/use
     def InitDataset(self, request, context):
         self.callbacks["InitDataset"](request.dataset_id,
             request.partition_scheme_id, request.partition_index, request.seed)
         return ModelUpdate_pb2.Ack()
 
+    # obtain the serialized model configuration and initialize the ML model
     def InitModel(self, request, context):
         self.callbacks["InitModel"](request.model_config, request.optimizer_config)
         return ModelUpdate_pb2.Ack()
 
+    # initialize the weights of the model
     def InitModelWeights(self, request, context):
         self.callbacks["InitModelWeights"](request)
         return ModelUpdate_pb2.Ack()
 
+    # inform the actor which learning strategy to use
     def InitLearningStrategy(self, request, context):
         self.callbacks["InitLearningStrategy"](request.learning_type_id,
             request.model_update_spec.synchronization_strategy_id,
@@ -37,11 +42,13 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
             request.model_update_spec.synchronization_strat_timeout)
         return ModelUpdate_pb2.Ack()
 
+    # inform the actor about his neighboring actors and their network addresses
     def RegisterNeighbors(self, request, context):
         self.callbacks["RegisterNeighbors"](
             {nid.ip_and_port: nid.actor_idx for nid in request.net_id})
         return ModelUpdate_pb2.Ack()
 
+    # stop the initialization phase and start the training phase
     def StartLearning(self, request, context):
         self.callbacks["StartLearning"]()
         return ModelUpdate_pb2.Ack()

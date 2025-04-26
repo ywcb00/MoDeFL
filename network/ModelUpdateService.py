@@ -10,17 +10,20 @@ class Servicer(ModelUpdate_pb2_grpc.ModelUpdateServicer):
     def __init__(self, callbacks):
         self.callbacks = callbacks
 
+    # retrieve a model update from a neighboring actor
     def TransferModelUpdate(self, request, context):
         self.callbacks["TransferModelUpdate"](request.update,
             request.identity.ip_and_port)
         return ModelUpdate_pb2.Ack()
 
+    # evalutate the model retrieved by a neighboring actor
     def EvaluateModel(self, request, context):
         eval_metrics = self.callbacks["EvaluateModel"](request)
         return ModelUpdate_pb2.EvaluationMetrics(
             metrics=[ModelUpdate_pb2.Metric(key=key, value=val)
                 for key, val in eval_metrics.items()])
 
+    # register that the communication from this particular neighboring actor is finished
     def AllowTermination(self, request, context):
         self.callbacks["AllowTermination"](request.ip_and_port)
         return ModelUpdate_pb2.Ack()

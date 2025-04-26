@@ -7,11 +7,12 @@ import pickle
 import tensorflow as tf
 
 class SerializationUtils:
-
+    # serialize parameters of type HeterogeneousArray into an array of byte-strings
     @classmethod
     def serializeParameters(self_class, parameters):
         return parameters.serialize()
 
+    # deserialize parameters from a byte-string back into a HeterogeneousArray
     @classmethod
     def deserializeParameters(self_class, serialized_parameters, sparse=False):
         if(not serialized_parameters):
@@ -25,6 +26,7 @@ class SerializationUtils:
             data = Compression.decompress(data) # decompress the data if compressed
             return data
 
+    # serialize the model architecture and the optimizer configuration of a keras model
     @classmethod
     def serializeModel(self_class, model, optimizer):
         model_config = model.get_config()
@@ -33,6 +35,7 @@ class SerializationUtils:
         serialized_optimizer_config = pickle.dumps(optimizer_config, protocol=4)
         return serialized_model_config, serialized_optimizer_config
 
+    # deserialize the model architecture and the optimizer configuration of a keras model
     @classmethod
     def deserializeModel(self_class, serialized_model_config, serialized_optimizer_config):
         model_config = pickle.loads(serialized_model_config)
