@@ -25,6 +25,8 @@ class Initiator:
         self.logger = logging.getLogger("Initiator")
         self.logger.setLevel(config["log_level"])
 
+    # initialize the identity, the dataset, the model, the initial model weights,
+    #   and the learning strategy on the actors as specified by the configuration
     async def initializeActor(self, addr, actor_idx, num_actors, model_config_serialized,
         optimizer_config_serialized, init_weights_serialized):
         self.logger.debug(f'Connecting to {addr}')
@@ -58,6 +60,7 @@ class Initiator:
         self.logger.debug(f'Initialized {addr}')
         return
 
+    # inform the actors about their neighbors as specified in the adjacency matrix
     async def registerNeighbors(self, addr, identities):
         self.logger.debug(f'Connecting to {addr}')
         async with grpc.aio.insecure_channel(addr) as channel:
@@ -68,6 +71,7 @@ class Initiator:
         self.logger.debug(f'Registered neighbors of {addr}')
         return
 
+    # instruct the actors to start the training phase
     async def startActorLearning(self, addr):
         self.logger.debug(f'Connecting to {addr}')
         async with grpc.aio.insecure_channel(addr) as channel:
@@ -79,6 +83,7 @@ class Initiator:
                 pass
         self.logger.debug(f'Started learning on {addr}')
 
+    # perform the initialization phase
     async def initialize(self, addresses, adj_mat):
         model = KerasModel.createKerasModelElementSpec(
             getDatasetElementSpec(self.config), self.config)
@@ -102,12 +107,14 @@ class Initiator:
             tasks.append(asyncio.create_task(self.registerNeighbors(addr, neighbor_identities)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
+    # start the training phase
     async def startLearning(self, addresses):
         tasks = []
         for addr in addresses:
             tasks.append(asyncio.create_task(self.startActorLearning(addr)))
         await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
 
+    # run the initiator
     def initiate(self):
         actor_addresses = [addr.strip() for addr in open(self.config["addr_file"])]
         self.config["num_workers"] = len(actor_addresses)

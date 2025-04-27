@@ -11,6 +11,7 @@ from tffmodel.KerasModel import KerasModel
 import logging
 import tensorflow as tf
 
+# represent a device and hold the main process in DFL with all related properties and functionalities
 class Actor:
     def __init__(self, config):
         self.config = config
@@ -18,6 +19,8 @@ class Actor:
         self.logger = logging.getLogger("Actor")
         self.logger.setLevel(config["log_level"])
 
+    # start the initialization service, perform the initizalizations on request,
+    #   and block until the start of the learning phase
     def initialize(self):
         def initializeIdentityCallback(addr, actor_idx, num_actors):
             self.config["address"] = addr
@@ -91,12 +94,14 @@ class Actor:
         init_service = InitializationService(self.config)
         init_service.waitForInitialization(callbacks)
 
+    # perform the training phase (and the evaluation phase)
     def train(self):
         self.logger.info("Starting with the learning procedure")
 
         self.strategy = LearningStrategy.getStrategy(self.config, self.keras_model, self.dataset)
         self.strategy.performTraining()
 
+    # run the actor
     def run(self):
         self.initialize()
         self.train()

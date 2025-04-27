@@ -1,4 +1,3 @@
-
 from Actor import Actor
 from Initiator import Initiator
 from utils.ConfigurationUtils import ConfigurationUtils
@@ -17,6 +16,8 @@ def printHelp(program_name):
     print("Actor usage:", program_name, "--act", "--port=<PORT>")
 
 def main(argv):
+
+    # ===== Load the configuration =====
     # default config if not specified otherwise
     config = ConfigurationUtils.DEFAULT_CONFIG
 
@@ -53,6 +54,7 @@ def main(argv):
 
     config = ConfigurationUtils.convertConfigTypes(config)
 
+    # ===== Start the Initiator or actor =====
     match exec_type:
         case ExecType.INITIATOR:
             logger.info("Starting Initiator")

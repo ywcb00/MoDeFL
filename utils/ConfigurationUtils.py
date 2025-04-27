@@ -9,6 +9,7 @@ import json
 import logging
 import os
 
+# define possible configuration options, convert the options to the correct format, and provide default configurations
 class ConfigurationUtils:
     DEFAULT_CONFIG = {
         "seed": 13,
@@ -54,6 +55,7 @@ class ConfigurationUtils:
     CLI_OPTIONS = [*[ck + "=" for ck in DEFAULT_CONFIG.keys()],
         *[oc + "=" for oc in OPTIONAL_CONFIGS]]
 
+    # load a configuration from the specifed json file
     @classmethod
     def loadConfig(self_class, config_path):
         with open(config_path) as cf:
@@ -62,6 +64,7 @@ class ConfigurationUtils:
             ), "Specifying the address file and adjacency file through the config file is not working."
         return config_dict
 
+    # translate the option name from CLI to the name used in the configuration dictionary
     @classmethod
     def parseCLIOption(self_class, config, opt, arg):
         if(opt == "-p"):
@@ -69,8 +72,10 @@ class ConfigurationUtils:
         config[opt.strip('-')] = arg
         return config
 
+    # convert the configuration options to the proper data types
     @classmethod
     def convertConfigTypes(self_class, config):
+        # convert enum options
         def convertEnum(value, enum_class):
             if(isinstance(value, str)):
                 value = enum_class((int(value)))
@@ -89,6 +94,7 @@ class ConfigurationUtils:
         config["partialdeviceparticipation_strategy"] = convertEnum(config["partialdeviceparticipation_strategy"],
             PartialDeviceParticipationStrategy)
 
+        # convert boolean options
         def convertBool(value):
             if(isinstance(value, str)):
                 value = value.lower().capitalize() in ("True", "1", "T")
@@ -105,6 +111,7 @@ class ConfigurationUtils:
             if(btc in config.keys()):
                 config[btc] = convertBool(config[btc])
 
+        # convert integer options
         def convertInt(value):
             if(isinstance(value, str)):
                 value = int(value)
@@ -120,6 +127,7 @@ class ConfigurationUtils:
             if(itc in config.keys()):
                 config[itc] = convertInt(config[itc])
 
+        # convert float options
         def convertFloat(value):
             if(isinstance(value, str) or isinstance(value, int)):
                 value = float(value)

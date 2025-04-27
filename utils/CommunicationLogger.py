@@ -1,6 +1,7 @@
 import json
 import os
 
+# class for incrementally storing information about the communicated messages and saving them as file
 class CommunicationLogger:
     logdict = dict()
 

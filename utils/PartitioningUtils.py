@@ -1,6 +1,8 @@
 import numpy as np
 
+# utility methods for partitioning data (and model parameters) and joining partitions
 class PartitioningUtils:
+    # partition the model parameters to one partition per actor
     @classmethod
     def partitionModelParameters(self_class, model_params, config):
         partitioned_params = dict()
@@ -9,6 +11,7 @@ class PartitioningUtils:
                 model_params, actor_idx, config["num_workers"])
         return partitioned_params
 
+    # obtain a partition of the model parameters by the respective actor index
     @classmethod
     def getParameterPartition(self_class, model_params, actor_idx, num_actors):
         # NOTE: Assuming the same data type among all layers
@@ -26,6 +29,7 @@ class PartitioningUtils:
         partition = model_params.__class__([model_params_flattened[from_idx : to_idx]])
         return partition
 
+    # join model parameter partitions into a full set of model parameters
     @classmethod
     def joinParameterPartitions(self_class, partition_dict):
         joined_partitions = np.concatenate([partition_dict[part_idx].get()[0]
