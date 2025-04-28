@@ -4,7 +4,6 @@ from model.ModelUpdateMarket import ModelUpdateMarket
 from model.SerializationUtils import SerializationUtils
 from network.ModelUpdateService import ModelUpdateService
 from tffmodel.KerasModel import KerasModel
-from tffmodel.types.HeterogeneousDenseArray import HeterogeneousDenseArray
 from utils.PartitioningUtils import PartitioningUtils
 
 import asyncio
@@ -16,7 +15,7 @@ class DFLv8Strategy(DFLv1Strategy):
     def __init__(self, config, keras_model, dataset):
         super().__init__(config, keras_model, dataset)
         self.global_weight_partition = PartitioningUtils.getParameterPartition(
-            keras_model.getWeights(), config["actor_idx"], config["num_workers"])
+            keras_model.getWeights(), config["actor_idx"], self.config)
         self.model_partition_market = ModelUpdateMarket(self.config)
         self.logger = logging.getLogger("model/DFLv8Strategy")
         self.logger.setLevel(config["log_level"])
@@ -63,7 +62,7 @@ class DFLv8Strategy(DFLv1Strategy):
     def aggregateWeightPartitions(self):
         current_model_delta = PartitioningUtils.getParameterPartition(
             (self.keras_model.getWeights() - self.previous_weights),
-            self.config["actor_idx"], self.config["num_workers"])
+            self.config["actor_idx"], self.config)
         received_model_update_vals = self.model_update_market.get().values()
         model_deltas = [rmu["weights"] for rmu in received_model_update_vals]
         aggregation_weights = [rmu["aggregation_weight"] for rmu in received_model_update_vals]
@@ -83,8 +82,8 @@ class DFLv8Strategy(DFLv1Strategy):
         # re-construct weight matrix from partitions
         partition_dict = {actor_idx_lookup_dict[addr]: elem["weights"] for addr, elem in received_model_partitions.items()}
         partition_dict[self.config["actor_idx"]] = self.global_weight_partition
-        flattened_parameters = PartitioningUtils.joinParameterPartitions(partition_dict)
-        new_weights = HeterogeneousDenseArray.fromFlattened(flattened_parameters, self.keras_model.getWeights())
+        new_weights = PartitioningUtils.joinParameterPartitions(
+            partition_dict, self.keras_model.getWeights(), self.config)
 
         self.keras_model.setWeights(new_weights)
 

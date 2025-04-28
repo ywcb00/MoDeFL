@@ -4,6 +4,7 @@ from network.PartialDeviceParticipation import PartialDeviceParticipationStrateg
 from tffdataset.DatasetUtils import DatasetID
 from tffdataset.FedDataset import PartitioningScheme
 from network.Compression import CompressionType
+from utils.PartitioningUtils import ModelPartitioningStrategy
 
 import json
 import logging
@@ -17,6 +18,7 @@ class ConfigurationUtils:
         "dataset_id": DatasetID.Mnist,
 
         "partitioning_scheme": PartitioningScheme.ROUND_ROBIN,
+        "model_partitioning_strategy": ModelPartitioningStrategy.LAYERWISE,
 
         "num_workers": 4, # i.e., number of actors in DFL
         "num_fed_epochs": 5,
@@ -88,6 +90,7 @@ class ConfigurationUtils:
             return value
         config["dataset_id"] = convertEnum(config["dataset_id"], DatasetID)
         config["partitioning_scheme"] = convertEnum(config["partitioning_scheme"], PartitioningScheme)
+        config["model_partitioning_strategy"] = convertEnum(config["model_partitioning_strategy"], ModelPartitioningStrategy)
         config["learning_type"] = convertEnum(config["learning_type"], LearningType)
         config["synchronization_strategy"] = convertEnum(config["synchronization_strategy"], SynchronizationStrategy)
         config["compression_type"] = convertEnum(config["compression_type"], CompressionType)

@@ -1,2 +1,0 @@
-localhost:50505
-localhost:50506
