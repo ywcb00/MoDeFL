@@ -19,29 +19,36 @@ class Actor:
         self.logger = logging.getLogger("Actor")
         self.logger.setLevel(config["log_level"])
 
+    # set the seed of all libraries used
+    def setSeed(self):
+        # random.seed(seed)
+        # np.random.seed(seed)
+        # tf.random.set_seed(seed)
+        tf.keras.utils.set_random_seed(self.config["seed"])
+
     # start the initialization service, perform the initizalizations on request,
     #   and block until the start of the learning phase
     def initialize(self):
-        def initializeIdentityCallback(addr, actor_idx, num_actors):
+        def initializeIdentityCallback(addr, actor_idx, num_actors, seed):
             self.config["address"] = addr
             self.config["actor_idx"] = actor_idx
             self.config["num_workers"] = num_actors
+            self.config["seed"] = seed
 
             self.logger.debug(f'Initialized own identity as {addr} with idx {actor_idx}/{num_actors}.')
 
-        def initializeDatasetCallback(dataset_id, partitioning_scheme_id, part_index, seed):
+        def initializeDatasetCallback(dataset_id, partitioning_scheme_id, part_index, dataset_seed):
             self.config["dataset_id"] = DatasetID(dataset_id)
             self.config["partitioning_scheme"] = PartitioningScheme(partitioning_scheme_id)
             self.config["part_index"] = part_index
-            self.config["seed"] = seed
 
             self.dataset = getDataset(self.config)
-            self.dataset.load()
+            self.dataset.load(seed=dataset_seed)
 
             # TODO: distinguish between loading an entire dataset and partitioning it
             #       or directly loading a single partition
             self.fed_dataset = FedDataset(self.config)
-            self.fed_dataset.construct(self.dataset)
+            self.fed_dataset.construct(self.dataset, seed=dataset_seed)
             self.fed_dataset.batch()
 
             self.dataset = DirectDataset(self.dataset.batch_size, self.dataset.element_spec,
@@ -93,6 +100,9 @@ class Actor:
 
         init_service = InitializationService(self.config)
         init_service.waitForInitialization(callbacks)
+
+        # set the seed for the random generators
+        self.setSeed()
 
     # perform the training phase (and the evaluation phase)
     def train(self):

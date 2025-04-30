@@ -22,7 +22,6 @@ class PartialDeviceParticipation:
     # randomly select the specified number of neighbors
     @classmethod
     def randomK(self_class, neighbor_candidates, k):
-        # TODO: define seed for randomness, but cannot define here as we do not
-        #   want to select the same set every round
+        # the seed for random sampling was set during initialization
         neighbors = random.sample(neighbor_candidates, k)
         return neighbors

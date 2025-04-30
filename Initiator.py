@@ -7,7 +7,7 @@ import network.protos.Initialization_pb2_grpc as Initialization_pb2_grpc
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 from tffdataset.DatasetUtils import getDatasetElementSpec
 from tffmodel.KerasModel import KerasModel
-from tffmodel.ModelBuilderUtils import getFedLearningRateSchedules, getModelBuilder
+from tffmodel.ModelBuilderUtils import getFedOptimizers
 from tffmodel.types.HeterogeneousDenseArray import HeterogeneousDenseArray
 
 import asyncio
@@ -25,6 +25,13 @@ class Initiator:
         self.logger = logging.getLogger("Initiator")
         self.logger.setLevel(config["log_level"])
 
+    # set the seed of all libraries used
+    def setSeed(self):
+        # random.seed(self.config["seed"])
+        # np.random.seed(self.config["seed"])
+        # tf.random.set_seed(self.config["seed"])
+        tf.keras.utils.set_random_seed(self.config["seed"])
+
     # initialize the identity, the dataset, the model, the initial model weights,
     #   and the learning strategy on the actors as specified by the configuration
     async def initializeActor(self, addr, actor_idx, num_actors, model_config_serialized,
@@ -36,13 +43,14 @@ class Initiator:
             await stub.InitIdentity(Initialization_pb2.Identity(
                 net_id=ModelUpdate_pb2.NetworkIdentity(
                     ip_and_port=addr, actor_idx=actor_idx),
+                seed=self.config["seed"]+actor_idx, # assign an individual seed to each actor
                 num_workers=num_actors))
 
             await stub.InitDataset(Initialization_pb2.Dataset(
                 dataset_id=self.config["dataset_id"].value,
                 partition_scheme_id=self.config["partitioning_scheme"].value,
                 partition_index=next(self.actor_idx),
-                seed=self.config["seed"]))
+                dataset_seed=self.config["seed"]))
 
             await stub.InitModel(Initialization_pb2.Model(
                 model_config=model_config_serialized, optimizer_config=optimizer_config_serialized))
@@ -87,17 +95,17 @@ class Initiator:
     async def initialize(self, addresses, adj_mat):
         model = KerasModel.createKerasModelElementSpec(
             getDatasetElementSpec(self.config), self.config)
-        _, local_lr = getFedLearningRateSchedules(self.config)
-        actor_optimizer = tf.keras.optimizers.SGD(learning_rate=local_lr)
+        _, optimizer = getFedOptimizers(self.config)
         model_config_serialized, optimizer_config_serialized = SerializationUtils.serializeModel(
-            model, actor_optimizer)
+            model, optimizer)
 
         init_weights = HeterogeneousDenseArray(model.get_weights())
         init_weights_serialized = SerializationUtils.serializeParameters(init_weights)
 
         tasks = []
+        num_actors = len(addresses)
         for actor_idx, addr in enumerate(addresses):
-            tasks.append(asyncio.create_task(self.initializeActor(addr, actor_idx, len(addresses),
+            tasks.append(asyncio.create_task(self.initializeActor(addr, actor_idx, num_actors,
                 model_config_serialized, optimizer_config_serialized, init_weights_serialized)))
             neighbor_identities = NetworkUtils.getNeighborIdentities(addr, addresses, adj_mat)
             assert (not self.config["learning_type"] in

@@ -14,13 +14,13 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
     # inform the actor about its public network address and its actor index in the system
     def InitIdentity(self, request, context):
         self.callbacks["InitIdentity"](request.net_id.ip_and_port,
-            request.net_id.actor_idx, request.num_workers)
+            request.net_id.actor_idx, request.num_workers, request.seed)
         return ModelUpdate_pb2.Ack()
 
     # inform the actor which dataset to load/use
     def InitDataset(self, request, context):
         self.callbacks["InitDataset"](request.dataset_id,
-            request.partition_scheme_id, request.partition_index, request.seed)
+            request.partition_scheme_id, request.partition_index, request.dataset_seed)
         return ModelUpdate_pb2.Ack()
 
     # obtain the serialized model configuration and initialize the ML model

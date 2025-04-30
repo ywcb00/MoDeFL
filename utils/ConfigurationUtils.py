@@ -20,7 +20,8 @@ class ConfigurationUtils:
         "partitioning_scheme": PartitioningScheme.ROUND_ROBIN,
         "model_partitioning_strategy": ModelPartitioningStrategy.LAYERWISE,
 
-        "num_workers": 4, # i.e., number of actors in DFL
+        # the number of workers is initialized by the initiator based on the address file
+        # "num_workers": 4, # i.e., number of actors in DFL
         "num_fed_epochs": 5,
         "num_local_epochs": 1,
 
@@ -29,7 +30,7 @@ class ConfigurationUtils:
 
         "num_threads_server": os.cpu_count(),
 
-        "learning_type": LearningType.DFLv3,
+        "learning_type": LearningType.DFLv1,
 
         "synchronization_strategy": SynchronizationStrategy.ONE_FROM_EACH,
         "synchronization_strat_percentage": 0.5,
@@ -123,7 +124,7 @@ class ConfigurationUtils:
             else:
                 raise RuntimeError(f'Cannot convert type {type(value)} to int.')
             return value
-        int_type_configs = ["seed", "num_workers", "num_threads_server",
+        int_type_configs = ["seed", "num_threads_server",
             "num_fed_epochs", "num_local_epochs", "synchronization_strat_amount",
             "compression_k", "compression_precision", "partialdeviceparticipation_k", "log_level"]
         for itc in int_type_configs:
