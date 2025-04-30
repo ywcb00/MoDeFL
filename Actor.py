@@ -67,7 +67,7 @@ class Actor:
 
             self.logger.debug("Initialized the model.")
 
-        def initializeModelWeightsCallback(request):
+        def initializeModelParametersCallback(request):
             # deserialize and reshape the retrieved weights
             init_weights = SerializationUtils.deserializeParameters(
                 request.parameters, sparse=request.sparse)
@@ -94,7 +94,7 @@ class Actor:
         callbacks = {"InitIdentity": initializeIdentityCallback,
             "InitDataset": initializeDatasetCallback,
             "InitModel": initializeModelCallback,
-            "InitModelWeights": initializeModelWeightsCallback,
+            "InitModelParameters": initializeModelParametersCallback,
             "InitLearningStrategy": initializeLearningStrategyCallback,
             "RegisterNeighbors": registerNeighborsCallback}
 

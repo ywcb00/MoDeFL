@@ -6,7 +6,7 @@ service Initialize {
     rpc InitIdentity(Identity) returns (Ack) {};
     rpc InitDataset(Dataset) returns (Ack) {};
     rpc InitModel(Model) returns (Ack) {};
-    rpc InitModelWeights(ModelParameters) returns (Ack) {};
+    rpc InitModelParameters(ModelParameters) returns (Ack) {};
     rpc InitLearningStrategy(LearningStrategy) returns (Ack) {};
     rpc RegisterNeighbors(NeighborSpec) returns (Ack) {};
     rpc StartLearning(Ack) returns (Ack) {};

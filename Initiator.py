@@ -55,7 +55,7 @@ class Initiator:
             await stub.InitModel(Initialization_pb2.Model(
                 model_config=model_config_serialized, optimizer_config=optimizer_config_serialized))
 
-            await stub.InitModelWeights(ModelUpdate_pb2.ModelParameters(
+            await stub.InitModelParameters(ModelUpdate_pb2.ModelParameters(
                 sparse=False, parameters=init_weights_serialized))
 
             await stub.InitLearningStrategy(Initialization_pb2.LearningStrategy(

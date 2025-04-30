@@ -29,8 +29,8 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
         return ModelUpdate_pb2.Ack()
 
     # initialize the weights of the model
-    def InitModelWeights(self, request, context):
-        self.callbacks["InitModelWeights"](request)
+    def InitModelParameters(self, request, context):
+        self.callbacks["InitModelParameters"](request)
         return ModelUpdate_pb2.Ack()
 
     # inform the actor which learning strategy to use
