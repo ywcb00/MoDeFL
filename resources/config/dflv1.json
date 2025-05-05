@@ -3,7 +3,8 @@
 
     "dataset_id": 2,
 
-    "partitioning_scheme": 3,
+    "partitioning_scheme": 4,
+    "partitioning_dirichlet_alpha": 1,
     "num_workers": 4,
 
     "num_threads_server": 8,

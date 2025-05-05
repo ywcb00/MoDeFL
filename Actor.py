@@ -37,10 +37,10 @@ class Actor:
 
             self.logger.debug(f'Initialized own identity as {addr} with idx {actor_idx}/{num_actors}.')
 
-        def initializeDatasetCallback(dataset_id, partitioning_scheme_id, part_index, dataset_seed):
+        def initializeDatasetCallback(dataset_id, partitioning_scheme_id, partition_index, dataset_seed):
             self.config["dataset_id"] = DatasetID(dataset_id)
             self.config["partitioning_scheme"] = PartitioningScheme(partitioning_scheme_id)
-            self.config["part_index"] = part_index
+            self.config["partition_index"] = partition_index
 
             self.dataset = getDataset(self.config)
             self.dataset.load(seed=dataset_seed)
@@ -52,12 +52,12 @@ class Actor:
             self.fed_dataset.batch()
 
             self.dataset = DirectDataset(self.dataset.batch_size, self.dataset.element_spec,
-                self.fed_dataset.train[self.config["part_index"]],
-                self.fed_dataset.val[self.config["part_index"]],
-                self.fed_dataset.test[self.config["part_index"]],
+                self.fed_dataset.train[self.config["partition_index"]],
+                self.fed_dataset.val[self.config["partition_index"]],
+                self.fed_dataset.test[self.config["partition_index"]],
                 self.config)
 
-            self.logger.debug(f'Using partition {self.config["part_index"]} of '
+            self.logger.debug(f'Using partition {self.config["partition_index"]} of '
                 + f'dataset {self.config["dataset_id"].name}.')
 
         def initializeModelCallback(model_config_serialized, optimizer_config_serialized):

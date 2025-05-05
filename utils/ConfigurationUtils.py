@@ -18,6 +18,7 @@ class ConfigurationUtils:
         "dataset_id": DatasetID.Mnist,
 
         "partitioning_scheme": PartitioningScheme.ROUND_ROBIN,
+        "partitioning_dirichlet_alpha": 2.5, # argument for Dirichlet partitioning
         "model_partitioning_strategy": ModelPartitioningStrategy.LAYERWISE,
 
         # the number of workers is initialized by the initiator based on the address file
@@ -140,7 +141,8 @@ class ConfigurationUtils:
             else:
                 raise RuntimeError(f'Cannot convert type {type(value)} to float.')
             return value
-        float_type_configs = ["synchronization_strat_percentage", "synchronization_strat_timeout",
+        float_type_configs = ["partitioning_dirichlet_alpha",
+            "synchronization_strat_percentage", "synchronization_strat_timeout",
             "compression_percentage", "lr", "lr_server", "lr_client"]
         for ftc in float_type_configs:
             if(ftc in config.keys()):
