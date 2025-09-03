@@ -48,9 +48,11 @@ class Initiator:
 
             await stub.InitDataset(Initialization_pb2.Dataset(
                 dataset_id=self.config["dataset_id"].value,
-                partition_scheme_id=self.config["partitioning_scheme"].value,
-                partition_index=next(self.actor_idx),
-                dataset_seed=self.config["seed"]))
+                partition=Initialization_pb2.Partition(
+                    partition_scheme_id=self.config["partitioning_scheme"].value,
+                    partition_index=next(self.actor_idx),
+                    dataset_seed=self.config["seed"],
+                    partition_dirichlet_alpha=self.config["partitioning_dirichlet_alpha"])))
 
             await stub.InitModel(Initialization_pb2.Model(
                 model_config=model_config_serialized, optimizer_config=optimizer_config_serialized))
@@ -60,11 +62,20 @@ class Initiator:
 
             await stub.InitLearningStrategy(Initialization_pb2.LearningStrategy(
                 learning_type_id=self.config["learning_type"].value,
-                model_update_spec=Initialization_pb2.ModelUpdateSpec(
-                    synchronization_strategy_id=self.config["synchronization_strategy"].value,
-                    synchronization_strat_percentage=self.config.setdefault("synchronization_strat_percentage", 0.0),
-                    synchronization_strat_amount=self.config.setdefault("synchronization_strat_amount", 0),
-                    synchronization_strat_timeout=self.config.setdefault("synchronization_strat_timeout", 0.0))))
+                sync_strat_spec=Initialization_pb2.SynchronizationStrategySpec(
+                    strategy_id=self.config["synchronization_strategy"].value,
+                    percentage=self.config["synchronization_strat_percentage"],
+                    amount=self.config["synchronization_strat_amount"],
+                    timeout=self.config["synchronization_strat_timeout"]),
+                compr_strat_spec=Initialization_pb2.CompressionStrategySpec(
+                    strategy_id=self.config["compression_type"].value,
+                    k=self.config["compression_k"],
+                    percentage=self.config["compression_percentage"],
+                    precision=self.config["compression_precision"]),
+                pdp_strat_spec=Initialization_pb2.PartialDeviceParticipationStrategySpec(
+                    strategy_id=self.config["partialdeviceparticipation_strategy"].value,
+                    k=self.config["partialdeviceparticipation_k"])
+                ))
         self.logger.debug(f'Initialized {addr}')
         return
 

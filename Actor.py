@@ -1,6 +1,8 @@
 from model.DFLv1Strategy import DFLv1Strategy
 from model.LearningStrategy import LearningStrategy, LearningType
 from model.ModelUpdateMarket import SynchronizationStrategy
+from network.Compression import CompressionType
+from network.PartialDeviceParticipation import PartialDeviceParticipationStrategy
 from model.SerializationUtils import SerializationUtils
 from network.InitializationService import InitializationService
 from tffdataset.DatasetUtils import DatasetID, getDataset
@@ -37,10 +39,12 @@ class Actor:
 
             self.logger.debug(f'Initialized own identity as {addr} with idx {actor_idx}/{num_actors}.')
 
-        def initializeDatasetCallback(dataset_id, partitioning_scheme_id, partition_index, dataset_seed):
+        def initializeDatasetCallback(dataset_id, partitioning_scheme_id, partition_index,
+            dataset_seed, partition_dirichlet_alpha):
             self.config["dataset_id"] = DatasetID(dataset_id)
             self.config["partitioning_scheme"] = PartitioningScheme(partitioning_scheme_id)
             self.config["partition_index"] = partition_index
+            self.config["partitioning_dirichlet_alpha"] = partition_dirichlet_alpha
 
             self.dataset = getDataset(self.config)
             self.dataset.load(seed=dataset_seed)
@@ -75,13 +79,22 @@ class Actor:
             self.logger.debug("Initialized the model weights.")
 
         def initializeLearningStrategyCallback(learning_type_id,
-            synchronization_strategy_id, synchronization_strat_percentage,
-            synchronization_strat_amount, synchronization_strat_timeout):
+            synchronization_strat_id, synchronization_strat_percentage,
+            synchronization_strat_amount, synchronization_strat_timeout,
+            compression_strat_id, compression_strat_k,
+            compression_strat_precentage, compression_strat_precision,
+            pdp_strat_id, pdp_strat_k):
             self.config["learning_type"] = LearningType(learning_type_id)
-            self.config["synchronization_strategy"] = SynchronizationStrategy(synchronization_strategy_id)
+            self.config["synchronization_strategy"] = SynchronizationStrategy(synchronization_strat_id)
             self.config["synchronization_strat_percentage"] = synchronization_strat_percentage
             self.config["synchronization_strat_amount"] = synchronization_strat_amount
             self.config["synchronization_strat_timeout"] = synchronization_strat_timeout
+            self.config["compression_type"] = CompressionType(compression_strat_id)
+            self.config["compression_k"] = compression_strat_k
+            self.config["compression_percentage"] = compression_strat_percentage
+            self.config["compression_precision"] = compression_strat_precision
+            self.config["partialdeviceparticipation_strategy"] = PartialDeviceParticipationStrategy(pdp_strat_id)
+            self.config["partialdeviceparticipation_k"] = pdp_strat_k
 
             self.logger.debug(f'Using learning strategy {self.config["learning_type"].name} ' +
                 f'and model update strategy {self.config["synchronization_strategy"].name}')

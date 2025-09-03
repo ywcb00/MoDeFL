@@ -20,7 +20,8 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
     # inform the actor which dataset to load/use
     def InitDataset(self, request, context):
         self.callbacks["InitDataset"](request.dataset_id,
-            request.partition_scheme_id, request.partition_index, request.dataset_seed)
+            request.partition.partition_scheme_id, request.partition.partition_index,
+            request.partition.dataset_seed, request.partition.partition_dirichlet_alpha)
         return ModelUpdate_pb2.Ack()
 
     # obtain the serialized model configuration and initialize the ML model
@@ -36,10 +37,16 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
     # inform the actor which learning strategy to use
     def InitLearningStrategy(self, request, context):
         self.callbacks["InitLearningStrategy"](request.learning_type_id,
-            request.model_update_spec.synchronization_strategy_id,
-            request.model_update_spec.synchronization_strat_percentage,
-            request.model_update_spec.synchronization_strat_amount,
-            request.model_update_spec.synchronization_strat_timeout)
+            request.sync_strat_spec.strategy_id,
+            request.sync_strat_spec.percentage,
+            request.sync_strat_spec.amount,
+            request.sync_strat_spec.timeout,
+            request.compr_strat_spec.strategy_id,
+            request.compr_strat_spec.k,
+            request.compr_strat_spec.percentage,
+            request.compr_strat_spec.precision,
+            request.pdp_strat_spec.strategy_id,
+            request.pdp_strat_spec.k)
         return ModelUpdate_pb2.Ack()
 
     # inform the actor about his neighboring actors and their network addresses

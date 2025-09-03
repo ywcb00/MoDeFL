@@ -20,9 +20,14 @@ message Identity {
 
 message Dataset {
     int32 dataset_id = 1; // enum id
-    int32 partition_scheme_id = 2; // enum id
-    int32 partition_index = 3; // index of partition in federated dataset
-    int32 dataset_seed = 4; // seed used for data splitting and partitioning (same among actors)
+    Partition partition = 2; // partitioning properties
+};
+
+message Partition {
+    int32 partition_scheme_id = 1; // enum id
+    int32 partition_index = 2; // index of partition in federated dataset
+    int32 dataset_seed = 3; // seed used for data splitting and partitioning (same among actors)
+    optional float partition_dirichlet_alpha = 4; // parameter for dirichlet partitioning
 };
 
 message Model {
@@ -31,15 +36,29 @@ message Model {
 };
 
 message LearningStrategy {
-    int32 learning_type_id = 1;
-    ModelUpdateSpec model_update_spec = 2; // model update strategy specification
+    int32 learning_type_id = 1; // enum id of learning strategy
+    SynchronizationStrategySpec sync_strat_spec = 2; // synchronization strategy specification
+    CompressionStrategySpec compr_strat_spec = 3; // compression strategy specification
+    PartialDeviceParticipationStrategySpec pdp_strat_spec = 4; // partial device participation strategy specification
 };
 
-message ModelUpdateSpec {
-    int32 synchronization_strategy_id = 1; // enum id
-    optional float synchronization_strat_percentage = 2; // min percentage of updates from neighbors
-    optional int32 synchronization_strat_amount = 3; // min amount of updates
-    optional float synchronization_strat_timeout = 4; // timeout for waiting for model updates
+message SynchronizationStrategySpec {
+    int32 strategy_id = 1; // enum id
+    optional float percentage = 2; // min percentage of updates from neighbors
+    optional int32 amount = 3; // min amount of updates
+    optional float timeout = 4; // timeout for waiting for model updates
+};
+
+message CompressionStrategySpec {
+    int32 strategy_id = 1; // enum id of compression type
+    optional int32 k = 2; // amount parameter for sparsification
+    optional float percentage = 3; // percentage parameter for sparsification
+    optional int32 precision = 4; // bit-precision parameter for quantization
+};
+
+message PartialDeviceParticipationStrategySpec {
+    int32 strategy_id = 1; // enum id of partial device participation strategy
+    optional int32 k = 2; // number of participants parameter
 };
 
 message NeighborSpec {
