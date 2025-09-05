@@ -64,7 +64,7 @@ class DFLv7Strategy(IDFLStrategy):
             self.computed_gradient, self.config), *model_gradients]
         aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
         avg_model_gradient = AggregationUtils.averageModelParameters(model_gradients, aggregation_weights)
-        new_weights = self.previous_weights - (avg_model_gradient * self.config["lr_server"])
+        new_weights = self.previous_weights - (avg_model_gradient * self.config["lr_global"])
         self.keras_model.setWeights(new_weights)
 
     # notify the neighbors about the completion and wait until this actor can terminate safely

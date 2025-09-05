@@ -52,7 +52,7 @@ class AggregationUtils:
     #   Thus, also the a_values are a list of values, not a list of vectors.
     @classmethod
     def fedNova(self_class, current_model_weights, model_gradients, aggregation_weights,
-        tau_eff, lr_server, a_values):
+        tau_eff, lr_global, a_values):
         normalized_gradients = [mg * (av / abs(av)) for mg, av in zip(model_gradients, a_values)]
         model_update_term = None
         aw_sum = np.sum(aggregation_weights)
@@ -61,6 +61,6 @@ class AggregationUtils:
                 model_update_term = ng * (aw / aw_sum)
             else:
                 model_update_term += ng * (aw / aw_sum)
-        model_update_term *= tau_eff * lr_server
+        model_update_term *= tau_eff * lr_global
         result = current_model_weights - model_update_term
         return result

@@ -14,8 +14,8 @@
     "num_fed_epochs": 5,
     "num_local_epochs": 2,
 
-    "lr_client": 0.002,
-    "lr_server": 0.002,
+    "lr": 0.002,
+    "lr_global": 0.002,
 
     "log_tensorboard_flag": 0,
     "log_performance_flag": 1,

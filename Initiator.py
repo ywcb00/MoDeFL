@@ -60,13 +60,18 @@ class Initiator:
             await stub.InitModelParameters(ModelUpdate_pb2.ModelParameters(
                 sparse=False, parameters=init_weights_serialized))
 
-            await stub.InitLearningStrategy(Initialization_pb2.LearningStrategy(
+            await stub.InitStrategy(Initialization_pb2.Strategy(
+                num_fed_epochs=self.config["num_fed_epochs"],
+                num_local_epochs=self.config["num_local_epochs"],
                 learning_type_id=self.config["learning_type"].value,
+                learning_rate_local=self.config["lr"],
+                learning_rate_global=self.config["lr_global"],
                 sync_strat_spec=Initialization_pb2.SynchronizationStrategySpec(
                     strategy_id=self.config["synchronization_strategy"].value,
                     percentage=self.config["synchronization_strat_percentage"],
                     amount=self.config["synchronization_strat_amount"],
-                    timeout=self.config["synchronization_strat_timeout"]),
+                    timeout=self.config["synchronization_strat_timeout"],
+                    allow_empty=self.config["synchronization_strat_allowempty"]),
                 compr_strat_spec=Initialization_pb2.CompressionStrategySpec(
                     strategy_id=self.config["compression_type"].value,
                     k=self.config["compression_k"],

@@ -78,17 +78,25 @@ class Actor:
             self.keras_model.setWeights(init_weights)
             self.logger.debug("Initialized the model weights.")
 
-        def initializeLearningStrategyCallback(learning_type_id,
+        def initializeStrategyCallback(
+            num_fed_epochs, num_local_epochs,
+            learning_type_id, lr_local, lr_global,
             synchronization_strat_id, synchronization_strat_percentage,
             synchronization_strat_amount, synchronization_strat_timeout,
+            synchronization_strat_allowempty,
             compression_strat_id, compression_strat_k,
-            compression_strat_precentage, compression_strat_precision,
+            compression_strat_percentage, compression_strat_precision,
             pdp_strat_id, pdp_strat_k):
+            self.config["num_fed_epochs"] = num_fed_epochs
+            self.config["num_local_epochs"] = num_local_epochs
             self.config["learning_type"] = LearningType(learning_type_id)
+            self.config["lr"] = lr_local if lr_local != 0 else None
+            self.config["lr_global"] = lr_global if lr_global != 0 else None
             self.config["synchronization_strategy"] = SynchronizationStrategy(synchronization_strat_id)
             self.config["synchronization_strat_percentage"] = synchronization_strat_percentage
             self.config["synchronization_strat_amount"] = synchronization_strat_amount
             self.config["synchronization_strat_timeout"] = synchronization_strat_timeout
+            self.config["synchronization_strat_allowempty"] = synchronization_strat_allowempty
             self.config["compression_type"] = CompressionType(compression_strat_id)
             self.config["compression_k"] = compression_strat_k
             self.config["compression_percentage"] = compression_strat_percentage
@@ -96,8 +104,12 @@ class Actor:
             self.config["partialdeviceparticipation_strategy"] = PartialDeviceParticipationStrategy(pdp_strat_id)
             self.config["partialdeviceparticipation_k"] = pdp_strat_k
 
-            self.logger.debug(f'Using learning strategy {self.config["learning_type"].name} ' +
-                f'and model update strategy {self.config["synchronization_strategy"].name}')
+            self.logger.debug(f'Using learning strategy {self.config["learning_type"].name}, ' +
+                f'model update strategy {self.config["synchronization_strategy"].name}, ' +
+                f'compression type {self.config["compression_type"].name}, ' +
+                f'partial device participation strategy {self.config["partialdeviceparticipation_strategy"].name}, ' +
+                f'local learning rate {self.config["lr"] if self.config["lr"] != 0 else "DEFAULT"}, ' +
+                f'and global learning rate {self.config["lr_global"] if self.config["lr_global"] != 0 else "DEFAULT"}.')
 
         def registerNeighborsCallback(neighbors_net_id):
             self.config["neighbors"] = list(neighbors_net_id.keys())
@@ -108,7 +120,7 @@ class Actor:
             "InitDataset": initializeDatasetCallback,
             "InitModel": initializeModelCallback,
             "InitModelParameters": initializeModelParametersCallback,
-            "InitLearningStrategy": initializeLearningStrategyCallback,
+            "InitStrategy": initializeStrategyCallback,
             "RegisterNeighbors": registerNeighborsCallback}
 
         init_service = InitializationService(self.config)

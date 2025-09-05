@@ -25,5 +25,5 @@ for clr in "${client_lr[@]}"
 do
     LOGDIR="${ARG_LOGDIR:-"$ROOTPATH/log"}/clr$clr"
     echo "=== Performing experiment with client learning rate $clr. ==="
-    $SCRIPTPATH/startAndInitiate.sh --lr_client="$clr" --log_dir="$LOGDIR" --num_fed_epochs=$NUM_FED_EPOCHS ${PROPAGATE_ARGS[*]}
+    $SCRIPTPATH/startAndInitiate.sh --lr="$clr" --log_dir="$LOGDIR" --num_fed_epochs=$NUM_FED_EPOCHS ${PROPAGATE_ARGS[*]}
 done

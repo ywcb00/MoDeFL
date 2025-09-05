@@ -65,7 +65,7 @@ class DFLv5Strategy(IDFLStrategy):
         tau_eff = 1
 
         new_weights = AggregationUtils.fedNova(self.previous_weights, model_gradients,
-            aggregation_weights, tau_eff, self.config["lr_server"], a_values)
+            aggregation_weights, tau_eff, self.config["lr_global"], a_values)
         self.keras_model.setWeights(new_weights)
 
     # notify the neighbors about the completion and wait until this actor can terminate safely

@@ -7,7 +7,7 @@ service Initialize {
     rpc InitDataset(Dataset) returns (Ack) {};
     rpc InitModel(Model) returns (Ack) {};
     rpc InitModelParameters(ModelParameters) returns (Ack) {};
-    rpc InitLearningStrategy(LearningStrategy) returns (Ack) {};
+    rpc InitStrategy(Strategy) returns (Ack) {};
     rpc RegisterNeighbors(NeighborSpec) returns (Ack) {};
     rpc StartLearning(Ack) returns (Ack) {};
 };
@@ -35,11 +35,15 @@ message Model {
     bytes optimizer_config = 2; // serialized optimizer configuration
 };
 
-message LearningStrategy {
-    int32 learning_type_id = 1; // enum id of learning strategy
-    SynchronizationStrategySpec sync_strat_spec = 2; // synchronization strategy specification
-    CompressionStrategySpec compr_strat_spec = 3; // compression strategy specification
-    PartialDeviceParticipationStrategySpec pdp_strat_spec = 4; // partial device participation strategy specification
+message Strategy {
+    int32 num_fed_epochs = 1; // number of federated epochs (i.e., communication rounds)
+    int32 num_local_epochs = 2; // number of federated epochs (i.e., communication rounds)
+    int32 learning_type_id = 3; // enum id of learning strategy
+    float learning_rate_local = 4; // local learning rate
+    float learning_rate_global = 5; // global learning rate
+    SynchronizationStrategySpec sync_strat_spec = 6; // synchronization strategy specification
+    CompressionStrategySpec compr_strat_spec = 7; // compression strategy specification
+    PartialDeviceParticipationStrategySpec pdp_strat_spec = 8; // partial device participation strategy specification
 };
 
 message SynchronizationStrategySpec {
@@ -47,6 +51,7 @@ message SynchronizationStrategySpec {
     optional float percentage = 2; // min percentage of updates from neighbors
     optional int32 amount = 3; // min amount of updates
     optional float timeout = 4; // timeout for waiting for model updates
+    optional bool allow_empty = 5; // flag indicating whether empty model updates should be counted as received model udpate or not
 };
 
 message CompressionStrategySpec {

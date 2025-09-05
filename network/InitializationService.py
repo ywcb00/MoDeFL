@@ -35,12 +35,18 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
         return ModelUpdate_pb2.Ack()
 
     # inform the actor which learning strategy to use
-    def InitLearningStrategy(self, request, context):
-        self.callbacks["InitLearningStrategy"](request.learning_type_id,
+    def InitStrategy(self, request, context):
+        self.callbacks["InitStrategy"](
+            request.num_fed_epochs,
+            request.num_local_epochs,
+            request.learning_type_id,
+            request.learning_rate_local,
+            request.learning_rate_global,
             request.sync_strat_spec.strategy_id,
             request.sync_strat_spec.percentage,
             request.sync_strat_spec.amount,
             request.sync_strat_spec.timeout,
+            request.sync_strat_spec.allow_empty,
             request.compr_strat_spec.strategy_id,
             request.compr_strat_spec.k,
             request.compr_strat_spec.percentage,

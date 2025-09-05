@@ -54,7 +54,7 @@ class ConfigurationUtils:
         "log_level": logging.DEBUG,
     }
 
-    OPTIONAL_CONFIGS = ["lr", "lr_server", "lr_client"]
+    OPTIONAL_CONFIGS = ["lr", "lr_global"]
 
     CLI_OPTIONS = [*[ck + "=" for ck in DEFAULT_CONFIG.keys()],
         *[oc + "=" for oc in OPTIONAL_CONFIGS]]
@@ -143,7 +143,7 @@ class ConfigurationUtils:
             return value
         float_type_configs = ["partitioning_dirichlet_alpha",
             "synchronization_strat_percentage", "synchronization_strat_timeout",
-            "compression_percentage", "lr", "lr_server", "lr_client"]
+            "compression_percentage", "lr", "lr_global"]
         for ftc in float_type_configs:
             if(ftc in config.keys()):
                 config[ftc] = convertFloat(config[ftc])
