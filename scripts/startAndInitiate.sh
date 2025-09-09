@@ -2,8 +2,8 @@
 
 BASEPATH=$(dirname "$0")
 
-ADDR_FILE="./resources/addr.txt"
-# ADJ_FILE="./resources/adj.txt"
+ADDR_FILE="./addr.txt"
+# ADJ_FILE="./adj.txt"
 PROPAGATE_ARGS=()
 
 for arg in "$@"; do # extract the address file and the adcacency matrix file from the call arguments

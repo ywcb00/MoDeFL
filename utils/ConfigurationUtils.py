@@ -18,7 +18,7 @@ class ConfigurationUtils:
         "dataset_id": DatasetID.Mnist,
 
         "partitioning_scheme": PartitioningScheme.ROUND_ROBIN,
-        "partitioning_dirichlet_alpha": 2.5, # argument for Dirichlet partitioning
+        "partitioning_alpha": 2.5, # argument for Dirichlet partitioning
         "model_partitioning_strategy": ModelPartitioningStrategy.LAYERWISE,
 
         # the number of workers is initialized by the initiator based on the address file
@@ -33,19 +33,19 @@ class ConfigurationUtils:
 
         "learning_type": LearningType.DFLv1,
 
-        "synchronization_strategy": SynchronizationStrategy.ONE_FROM_EACH,
-        "synchronization_strat_percentage": 0.5,
-        "synchronization_strat_amount": 2,
-        "synchronization_strat_timeout": 3,
-        "synchronization_strat_allowempty": False,
+        "sync_strategy": SynchronizationStrategy.ONE_FROM_EACH,
+        "sync_strat_percentage": 0.5,
+        "sync_strat_amount": 2,
+        "sync_strat_timeout": 3,
+        "sync_strat_allowempty": False,
 
         "compression_type": CompressionType.NoneType,
         "compression_k": 100,
         "compression_percentage": 0.2,
         "compression_precision": 8,
 
-        "partialdeviceparticipation_strategy": PartialDeviceParticipationStrategy.NoneStrategy,
-        "partialdeviceparticipation_k": 2,
+        "pdp_strategy": PartialDeviceParticipationStrategy.NoneStrategy,
+        "pdp_k": 2,
 
         "log_tensorboard_flag": False,
         "log_performance_flag": True,
@@ -92,9 +92,9 @@ class ConfigurationUtils:
         config["partitioning_scheme"] = convertEnum(config["partitioning_scheme"], PartitioningScheme)
         config["model_partitioning_strategy"] = convertEnum(config["model_partitioning_strategy"], ModelPartitioningStrategy)
         config["learning_type"] = convertEnum(config["learning_type"], LearningType)
-        config["synchronization_strategy"] = convertEnum(config["synchronization_strategy"], SynchronizationStrategy)
+        config["sync_strategy"] = convertEnum(config["sync_strategy"], SynchronizationStrategy)
         config["compression_type"] = convertEnum(config["compression_type"], CompressionType)
-        config["partialdeviceparticipation_strategy"] = convertEnum(config["partialdeviceparticipation_strategy"],
+        config["pdp_strategy"] = convertEnum(config["pdp_strategy"],
             PartialDeviceParticipationStrategy)
 
         # convert boolean options
@@ -108,7 +108,7 @@ class ConfigurationUtils:
             else:
                 raise RuntimeError(f'Cannot convert type {type(value)} to bool.')
             return value
-        bool_type_configs = ["synchronization_strat_allowempty", "log_tensorboard_flag",
+        bool_type_configs = ["sync_strat_allowempty", "log_tensorboard_flag",
             "log_performance_flag", "log_communication_flag"]
         for btc in bool_type_configs:
             if(btc in config.keys()):
@@ -124,8 +124,8 @@ class ConfigurationUtils:
                 raise RuntimeError(f'Cannot convert type {type(value)} to int.')
             return value
         int_type_configs = ["seed", "num_threads_server",
-            "num_fed_epochs", "num_local_epochs", "synchronization_strat_amount",
-            "compression_k", "compression_precision", "partialdeviceparticipation_k", "log_level"]
+            "num_fed_epochs", "num_local_epochs", "sync_strat_amount",
+            "compression_k", "compression_precision", "pdp_k", "log_level"]
         for itc in int_type_configs:
             if(itc in config.keys()):
                 config[itc] = convertInt(config[itc])
@@ -139,8 +139,8 @@ class ConfigurationUtils:
             else:
                 raise RuntimeError(f'Cannot convert type {type(value)} to float.')
             return value
-        float_type_configs = ["partitioning_dirichlet_alpha",
-            "synchronization_strat_percentage", "synchronization_strat_timeout",
+        float_type_configs = ["partitioning_alpha",
+            "sync_strat_percentage", "sync_strat_timeout",
             "compression_percentage", "lr", "lr_global"]
         for ftc in float_type_configs:
             if(ftc in config.keys()):

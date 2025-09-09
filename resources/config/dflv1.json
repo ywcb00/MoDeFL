@@ -6,17 +6,17 @@
     "dataset_id": 2,
 
     "partitioning_scheme": 4,
-    "partitioning_dirichlet_alpha": 1,
+    "partitioning_alpha": 1,
     "num_workers": 4,
 
     "num_threads_server": 8,
 
     "learning_type": 1,
-    "synchronization_strategy": 1,
+    "sync_strategy": 1,
 
-    "synchronization_strat_allowempty": 1,
-    "partialdeviceparticipation_strategy": 1,
-    "partialdeviceparticipation_k": 1,
+    "sync_strat_allowempty": 1,
+    "pdp_strategy": 1,
+    "pdp_k": 1,
 
     "num_fed_epochs": 5,
     "num_local_epochs": 2,

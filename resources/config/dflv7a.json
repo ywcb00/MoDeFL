@@ -9,7 +9,7 @@
     "num_threads_server": 8,
 
     "learning_type": 7,
-    "synchronization_strategy": 1,
+    "sync_strategy": 1,
 
     "compression_type": 101,
     "compression_k": 100,

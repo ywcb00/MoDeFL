@@ -10,12 +10,12 @@ class PartialDeviceParticipation:
     # proxy the call according to the specified strategy
     @classmethod
     def getNeighbors(self_class, config):
-        match config["partialdeviceparticipation_strategy"]:
+        match config["pdp_strategy"]:
             case PartialDeviceParticipationStrategy.NoneStrategy:
                 return config["neighbors"]
             case PartialDeviceParticipationStrategy.RandomK:
                 return self_class.randomK(config["neighbors"],
-                    config["partialdeviceparticipation_k"])
+                    config["pdp_k"])
             case _:
                 raise NotImplementedError
 

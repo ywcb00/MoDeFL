@@ -44,7 +44,7 @@ class Actor:
             self.config["dataset_id"] = DatasetID(dataset_id)
             self.config["partitioning_scheme"] = PartitioningScheme(partitioning_scheme_id)
             self.config["partition_index"] = partition_index
-            self.config["partitioning_dirichlet_alpha"] = partition_dirichlet_alpha
+            self.config["partitioning_alpha"] = partition_dirichlet_alpha
 
             self.dataset = getDataset(self.config)
             self.dataset.load(seed=dataset_seed)
@@ -92,22 +92,22 @@ class Actor:
             self.config["learning_type"] = LearningType(learning_type_id)
             self.config["lr"] = lr_local if lr_local != 0 else None
             self.config["lr_global"] = lr_global if lr_global != 0 else None
-            self.config["synchronization_strategy"] = SynchronizationStrategy(synchronization_strat_id)
-            self.config["synchronization_strat_percentage"] = synchronization_strat_percentage
-            self.config["synchronization_strat_amount"] = synchronization_strat_amount
-            self.config["synchronization_strat_timeout"] = synchronization_strat_timeout
-            self.config["synchronization_strat_allowempty"] = synchronization_strat_allowempty
+            self.config["sync_strategy"] = SynchronizationStrategy(synchronization_strat_id)
+            self.config["sync_strat_percentage"] = synchronization_strat_percentage
+            self.config["sync_strat_amount"] = synchronization_strat_amount
+            self.config["sync_strat_timeout"] = synchronization_strat_timeout
+            self.config["sync_strat_allowempty"] = synchronization_strat_allowempty
             self.config["compression_type"] = CompressionType(compression_strat_id)
             self.config["compression_k"] = compression_strat_k
             self.config["compression_percentage"] = compression_strat_percentage
             self.config["compression_precision"] = compression_strat_precision
-            self.config["partialdeviceparticipation_strategy"] = PartialDeviceParticipationStrategy(pdp_strat_id)
-            self.config["partialdeviceparticipation_k"] = pdp_strat_k
+            self.config["pdp_strategy"] = PartialDeviceParticipationStrategy(pdp_strat_id)
+            self.config["pdp_k"] = pdp_strat_k
 
             self.logger.debug(f'Using learning strategy {self.config["learning_type"].name}, ' +
-                f'model update strategy {self.config["synchronization_strategy"].name}, ' +
+                f'model update strategy {self.config["sync_strategy"].name}, ' +
                 f'compression type {self.config["compression_type"].name}, ' +
-                f'partial device participation strategy {self.config["partialdeviceparticipation_strategy"].name}, ' +
+                f'partial device participation strategy {self.config["pdp_strategy"].name}, ' +
                 f'local learning rate {self.config["lr"] if self.config["lr"] != 0 else "DEFAULT"}, ' +
                 f'and global learning rate {self.config["lr_global"] if self.config["lr_global"] != 0 else "DEFAULT"}.')
 

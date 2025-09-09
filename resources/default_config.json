@@ -9,10 +9,10 @@
     "num_threads_server": 8,
 
     "learning_type": 3,
-    "synchronization_strategy": 1,
-    "synchronization_strat_percentage": 0.5,
-    "synchronization_strat_amount": 2,
-    "synchronization_strat_timeout": 3,
+    "sync_strategy": 1,
+    "sync_strat_percentage": 0.5,
+    "sync_strat_amount": 2,
+    "sync_strat_timeout": 3,
 
     "num_fed_epochs": 5,
     "num_local_epochs": 1,

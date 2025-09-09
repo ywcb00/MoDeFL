@@ -18,7 +18,7 @@ class SynchronizationStrategy(Enum):
 class ModelUpdateMarket:
     def __init__(self, config):
         self.config = config
-        self.config.setdefault("synchronization_strategy", SynchronizationStrategy.ONE_FROM_EACH)
+        self.config.setdefault("sync_strategy", SynchronizationStrategy.ONE_FROM_EACH)
         # store a queue of model updates for each neighboring actor
         self.model_updates = dict(
             [(addr, SimpleQueue()) for addr in config["neighbors"]])
@@ -26,7 +26,7 @@ class ModelUpdateMarket:
     # obtain the model updates using the prespecified synchronization strategy
     def get(self):
         model_updates_dict = None
-        match self.config["synchronization_strategy"]:
+        match self.config["sync_strategy"]:
             case SynchronizationStrategy.ONE_FROM_EACH:
                 model_updates_dict = self.getOneFromAll()
             case SynchronizationStrategy.AVAILABLE:
@@ -65,7 +65,7 @@ class ModelUpdateMarket:
         result = dict()
         for addr, queue in self.model_updates.items():
             update = queue.get(block=True, timeout=None)
-            while(not self.config["synchronization_strat_allowempty"] and not update):
+            while(not self.config["sync_strat_allowempty"] and not update):
                 update = queue.get(block=True, timeout=None)
             result[addr] = update
         return result
@@ -87,7 +87,7 @@ class ModelUpdateMarket:
         result = dict()
         for addr, queue in self.model_updates.items():
             update = [queue.get(block=True, timeout=None)]
-            while(not self.config["synchronization_strat_allowempty"] and not update[0]):
+            while(not self.config["sync_strat_allowempty"] and not update[0]):
                 update = [queue.get(block=True, timeout=None)]
             result[addr] = update
         for addr, queue in self.model_updates.items():
@@ -100,7 +100,7 @@ class ModelUpdateMarket:
 
     # poll until we got one model update from at least the specified proportion of neighbors
     def getOneFromAtLeastPercentage(self):
-        percentage = self.config.setdefault("synchronization_strat_percentage", 0.5)
+        percentage = self.config.setdefault("sync_strat_percentage", 0.5)
         amount = math.ceil(len(self.model_updates) * percentage)
         result = dict()
         while(len(result) < amount):
@@ -109,7 +109,7 @@ class ModelUpdateMarket:
                 queue = self.model_updates[addr]
                 try:
                     update = queue.get(block=False)
-                    if(self.config["synchronization_strat_allowempty"] or update):
+                    if(self.config["sync_strat_allowempty"] or update):
                         result[addr] = update
                 except queue.Empty:
                     pass # do nothing, queue is empty, continue with next queue
@@ -117,13 +117,13 @@ class ModelUpdateMarket:
 
     # poll until we got at least the specified amount of model updates
     def getAtLeastK(self):
-        amount = self.config.setdefault("synchronization_strat_amount", len(self.model_updates) // 2)
+        amount = self.config.setdefault("sync_strat_amount", len(self.model_updates) // 2)
         result = dict()
         while(amount > 0):
             for addr, queue in self.model_updates.items():
                 try:
                     update = queue.get(block=False)
-                    if(self.config["synchronization_strat_allowempty"] or update):
+                    if(self.config["sync_strat_allowempty"] or update):
                         result.setdefault(addr, list()).append(update)
                         amount -= 1
                 except queue.Empty:
@@ -132,7 +132,7 @@ class ModelUpdateMarket:
 
     # try to get one from each neighbor until we reach the specified timeout (seconds) (allow empty)
     def getOneFromAllTimeout(self, timeout):
-        timeout = self.config.setdefault("synchronization_strat_timeout", 3)
+        timeout = self.config.setdefault("sync_strat_timeout", 3)
         async def getOneTimeout(addr, queue, timeout):
             try:
                 mod_update = (addr, queue.get(block=True, timeout=timeout))
