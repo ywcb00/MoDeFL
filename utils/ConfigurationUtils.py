@@ -26,8 +26,8 @@ class ConfigurationUtils:
         "num_fed_epochs": 5,
         "num_local_epochs": 1,
 
-        "addr_file": "./resources/actor_addresses.txt",
-        "adj_file": "./resources/actor_adjacency.txt",
+        "addr_file": "./addr.txt",
+        "adj_file": "./adj.txt",
 
         "num_threads_server": os.cpu_count(),
 
@@ -64,8 +64,6 @@ class ConfigurationUtils:
     def loadConfig(self_class, config_path):
         with open(config_path) as cf:
             config_dict = json.loads(cf.read())
-        assert (not "adj_file" in config_dict.keys() and not "addr_file" in config_dict.keys()
-            ), "Specifying the address file and adjacency file through the config file is not working."
         return config_dict
 
     # translate the option name from CLI to the name used in the configuration dictionary

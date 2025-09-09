@@ -2,14 +2,14 @@
 
 BASEPATH=$(dirname "$0")
 
-ADDR_FILE="resources/actor_addresses.txt"
-ADJ_FILE="./resources/actor_adjacency.txt"
+ADDR_FILE="./resources/addr.txt"
+# ADJ_FILE="./resources/adj.txt"
 PROPAGATE_ARGS=()
 
 for arg in "$@"; do # extract the address file and the adcacency matrix file from the call arguments
     case "$arg" in
         --addr_file=*) ADDR_FILE="${arg#*=}" ;;
-        --adj_file=*) ADJ_FILE="${arg#*=}" ;;
+        # --adj_file=*) ADJ_FILE="${arg#*=}" ;;
         *) PROPAGATE_ARGS+=("$arg") ;;
     esac
 done
@@ -25,6 +25,6 @@ script_pid="$!"
 sleep 3
 
 # start the initiator and the initialization phase
-$BASEPATH/initiate.sh --addr_file="$ADDR_FILE" --adj_file="$ADJ_FILE" ${PROPAGATE_ARGS[*]}
+$BASEPATH/initiate.sh --addr_file="$ADDR_FILE" ${PROPAGATE_ARGS[*]}
 
 wait $script_pid

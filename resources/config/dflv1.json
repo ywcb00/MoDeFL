@@ -1,6 +1,8 @@
 {
     "seed": 13,
 
+    "adj_file": "./resources/adj_4_fullyconnected.txt",
+
     "dataset_id": 2,
 
     "partitioning_scheme": 4,

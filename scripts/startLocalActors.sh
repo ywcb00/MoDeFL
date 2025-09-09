@@ -2,7 +2,7 @@
 
 BASEPATH=$(dirname "$0")
 
-ADDR_FILE=${1:-"resources/actor_addresses.txt"}
+ADDR_FILE=${1:-"resources/addr.txt"}
 shift # remove the first argument from argument list (i.e., the address file)
 
 actor_pid=() # empty array
