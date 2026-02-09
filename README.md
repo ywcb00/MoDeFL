@@ -22,10 +22,10 @@ make sanitycheck
 ##### Deploy
 Deploy an actor via the following command
 ```bash
-make act PORT=<port>
+make act PORT=<port> [CONFIG_FILE=<config_file>]
 ```
 
 Deploy the initiator via the following command
 ```bash
-make initiate ADDR_FILE=<addr_file> ADJ_FILE=<adj_file>
+make initiate ADDR_FILE=<addr_file> ADJ_FILE=<adj_file> [CONFIG_FILE=<config_file>]
 ```

@@ -39,7 +39,7 @@ def main(argv):
         if opt in ("-h", "--help"):
             printHelp(argv[0])
             sys.exit()
-        elif opt in ("-c", "--config"):
+        elif opt in ("-c", "--config") and arg:
             logger.info(f'Loading configuration from {arg}.')
             config.update(ConfigurationUtils.loadConfig(arg))
     for opt, arg in opts:

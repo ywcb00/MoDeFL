@@ -1,0 +1,31 @@
+{
+    "seed": 13,
+
+    "adj_file": "./resources/adj_sanitycheck.txt",
+
+    "dataset_id": 3,
+
+    "partitioning_scheme": 4,
+    "partitioning_alpha": 0.2,
+    "num_workers": 4,
+
+    "num_threads_server": 8,
+
+    "learning_type": 1,
+    "sync_strategy": 1,
+
+    "sync_strat_allowempty": 1,
+    "pdp_strategy": 1,
+    "pdp_k": 1,
+
+    "num_fed_epochs": 4,
+    "num_local_epochs": 2,
+
+    "lr": 0.1,
+
+    "log_tensorboard_flag": 0,
+    "log_performance_flag": 0,
+    "log_communication_flag": 0,
+    "log_dir": "./log/sanitycheck",
+    "log_level": 10
+}
