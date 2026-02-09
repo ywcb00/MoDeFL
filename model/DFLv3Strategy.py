@@ -1,7 +1,7 @@
 from model.AggregationUtils import AggregationUtils
 from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
-from network.ModelUpdateService import ModelUpdateService
+from network.NetworkUtils import NetworkUtils
 from tffmodel.types.HeterogeneousDenseArray import HeterogeneousDenseArray
 
 import asyncio
@@ -62,7 +62,7 @@ class DFLv3Strategy(IDFLStrategy):
             "EvaluateModel": evaluateModelCallback,
             "AllowTermination": allowTerminationCallback}
 
-        self.model_update_service = ModelUpdateService(self.config)
+        self.model_update_service = NetworkUtils.getModelUpdateService(self.config)
         self.model_update_service.startServer(callbacks)
 
     def fitLocal(self):

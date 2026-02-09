@@ -4,6 +4,7 @@ from network.PartialDeviceParticipation import PartialDeviceParticipationStrateg
 from tffdataset.DatasetUtils import DatasetID
 from tffdataset.FedDataset import PartitioningScheme
 from network.Compression import CompressionType
+from network.NetworkUtils import NetworkServiceType
 from utils.PartitioningUtils import ModelPartitioningStrategy
 
 import json
@@ -32,6 +33,8 @@ class ConfigurationUtils:
         "num_threads_server": os.cpu_count(),
 
         "learning_type": LearningType.DFLv1,
+
+        "networkservice_type": NetworkServiceType.GRPC,
 
         "sync_strategy": SynchronizationStrategy.ONE_FROM_EACH,
         "sync_strat_percentage": 0.5,
@@ -92,6 +95,7 @@ class ConfigurationUtils:
         config["partitioning_scheme"] = convertEnum(config["partitioning_scheme"], PartitioningScheme)
         config["model_partitioning_strategy"] = convertEnum(config["model_partitioning_strategy"], ModelPartitioningStrategy)
         config["learning_type"] = convertEnum(config["learning_type"], LearningType)
+        config["networkservice_type"] = convertEnum(config["networkservice_type"], NetworkServiceType)
         config["sync_strategy"] = convertEnum(config["sync_strategy"], SynchronizationStrategy)
         config["compression_type"] = convertEnum(config["compression_type"], CompressionType)
         config["pdp_strategy"] = convertEnum(config["pdp_strategy"],

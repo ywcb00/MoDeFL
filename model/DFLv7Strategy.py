@@ -2,7 +2,7 @@ from model.AggregationUtils import AggregationUtils
 from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.Compression import Compression
-from network.ModelUpdateService import ModelUpdateService
+from network.NetworkUtils import NetworkUtils
 from tffmodel.KerasModel import KerasModel
 
 import asyncio
@@ -39,7 +39,7 @@ class DFLv7Strategy(IDFLStrategy):
             "EvaluateModel": evaluateModelCallback,
             "AllowTermination": allowTerminationCallback}
 
-        self.model_update_service = ModelUpdateService(self.config)
+        self.model_update_service = NetworkUtils.getModelUpdateService(self.config)
         self.model_update_service.startServer(callbacks)
 
     def fitLocal(self):

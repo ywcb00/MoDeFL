@@ -4,7 +4,7 @@ from model.ModelUpdateMarket import SynchronizationStrategy
 from network.Compression import CompressionType
 from network.PartialDeviceParticipation import PartialDeviceParticipationStrategy
 from model.SerializationUtils import SerializationUtils
-from network.InitializationService import InitializationService
+from network.NetworkUtils import NetworkUtils
 from tffdataset.DatasetUtils import DatasetID, getDataset
 from tffdataset.DirectDataset import DirectDataset
 from tffdataset.FedDataset import FedDataset, PartitioningScheme
@@ -123,7 +123,7 @@ class Actor:
             "InitStrategy": initializeStrategyCallback,
             "RegisterNeighbors": registerNeighborsCallback}
 
-        init_service = InitializationService(self.config)
+        init_service = NetworkUtils.getInitializationService(self.config)
         init_service.waitForInitialization(callbacks)
 
         # set the seed for the random generators

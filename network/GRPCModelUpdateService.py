@@ -1,4 +1,5 @@
 from model.SerializationUtils import SerializationUtils
+from network.IModelUpdateService import IModelUpdateService
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 import network.protos.ModelUpdate_pb2_grpc as ModelUpdate_pb2_grpc
 
@@ -28,10 +29,10 @@ class Servicer(ModelUpdate_pb2_grpc.ModelUpdateServicer):
         self.callbacks["AllowTermination"](request.ip_and_port)
         return ModelUpdate_pb2.Ack()
 
-class ModelUpdateService:
+class GRPCModelUpdateService(IModelUpdateService):
     def __init__(self, config):
-        self.config = config
-        self.logger = logging.getLogger("network/ModelUpdateService")
+        super().__init__(config)
+        self.logger = logging.getLogger("network/GRPCModelUpdateService")
         self.logger.setLevel(config["log_level"])
 
     def startServer(self, callbacks):

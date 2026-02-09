@@ -1,4 +1,4 @@
-
+from network.IInitializationService import IInitializationService
 import network.protos.Initialization_pb2 as Initialization_pb2
 import network.protos.Initialization_pb2_grpc as Initialization_pb2_grpc
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
@@ -66,10 +66,10 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
         self.callbacks["StartLearning"]()
         return ModelUpdate_pb2.Ack()
 
-class InitializationService:
+class GRPCInitializationService(IInitializationService):
     def __init__(self, config):
-        self.config = config
-        self.logger = logging.getLogger("network/InitializationService")
+        super().__init__(config)
+        self.logger = logging.getLogger("network/GRPCInitializationService")
         self.logger.setLevel(config["log_level"])
 
     def waitForInitialization(self, callbacks):

@@ -7,13 +7,15 @@
 
     "partitioning_scheme": 4,
     "partitioning_alpha": 0.2,
-    "num_workers": 4,
+    "num_workers": 2,
 
     "num_threads_server": 8,
 
     "learning_type": 1,
-    "sync_strategy": 1,
 
+    "networkservice_type": 1,
+
+    "sync_strategy": 1,
     "sync_strat_allowempty": 1,
     "pdp_strategy": 1,
     "pdp_k": 1,

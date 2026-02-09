@@ -9,6 +9,9 @@
     "num_threads_server": 8,
 
     "learning_type": 4,
+
+    "networkservice_type": 1,
+
     "sync_strategy": 1,
 
     "num_fed_epochs": 5,

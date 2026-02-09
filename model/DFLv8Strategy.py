@@ -2,7 +2,7 @@ from model.AggregationUtils import AggregationUtils
 from model.DFLv1Strategy import DFLv1Strategy
 from model.ModelUpdateMarket import ModelUpdateMarket
 from model.SerializationUtils import SerializationUtils
-from network.ModelUpdateService import ModelUpdateService
+from network.NetworkUtils import NetworkUtils
 from tffmodel.KerasModel import KerasModel
 from utils.PartitioningUtils import PartitioningUtils
 
@@ -47,7 +47,7 @@ class DFLv8Strategy(DFLv1Strategy):
             "EvaluateModel": evaluateModelCallback,
             "AllowTermination": allowTerminationCallback}
 
-        self.model_update_service = ModelUpdateService(self.config)
+        self.model_update_service = NetworkUtils.getModelUpdateService(self.config)
         self.model_update_service.startServer(callbacks)
 
     def broadcast(self):
