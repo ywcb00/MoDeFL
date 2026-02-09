@@ -144,7 +144,7 @@ class Initiator:
         self.config["num_workers"] = len(actor_addresses)
         actor_adjacency = np.fromfile(self.config["adj_file"], dtype=int, sep=" ")
         actor_adjacency = np.reshape(actor_adjacency,
-            newshape=(self.config["num_workers"], self.config["num_workers"]))
+            shape=(self.config["num_workers"], self.config["num_workers"]))
         asyncio.run(self.initialize(actor_addresses, actor_adjacency))
         asyncio.run(self.startLearning(actor_addresses))
         self.logger.info("Initiation completed.")
