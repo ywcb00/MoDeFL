@@ -3,6 +3,7 @@ from model.ModelUpdateMarket import SynchronizationStrategy
 from network.PartialDeviceParticipation import PartialDeviceParticipationStrategy
 from tffdataset.DatasetUtils import DatasetID
 from tffdataset.FedDataset import PartitioningScheme
+from tffmodel.ModelUtils import ModelType
 from network.Compression import CompressionType
 from network.NetworkUtils import NetworkServiceType
 from utils.PartitioningUtils import ModelPartitioningStrategy
@@ -17,6 +18,8 @@ class ConfigurationUtils:
         "seed": 13,
 
         "dataset_id": DatasetID.Mnist,
+
+        "modeltype_id": ModelType.KERAS,
 
         "partitioning_scheme": PartitioningScheme.ROUND_ROBIN,
         "partitioning_alpha": 2.5, # argument for Dirichlet partitioning
@@ -92,6 +95,7 @@ class ConfigurationUtils:
                 raise RuntimeError(f'Cannot convert type {type(value)} to enum {enum_class.__name__}.')
             return value
         config["dataset_id"] = convertEnum(config["dataset_id"], DatasetID)
+        config["modeltype_id"] = convertEnum(config["modeltype_id"], ModelType)
         config["partitioning_scheme"] = convertEnum(config["partitioning_scheme"], PartitioningScheme)
         config["model_partitioning_strategy"] = convertEnum(config["model_partitioning_strategy"], ModelPartitioningStrategy)
         config["learning_type"] = convertEnum(config["learning_type"], LearningType)

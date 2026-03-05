@@ -4,7 +4,7 @@ from network.Compression import Compression
 from network.PartialDeviceParticipation import PartialDeviceParticipation
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 import network.protos.ModelUpdate_pb2_grpc as ModelUpdate_pb2_grpc
-from tffmodel.KerasModel import KerasModel
+from tffmodel.ModelUtils import ModelUtils
 from utils.CommunicationLogger import CommunicationLogger
 from utils.PerformanceLogger import PerformanceLogger
 
@@ -197,12 +197,12 @@ class IDFLStrategy(ABC):
     def evaluateWeights(self, weights):
         eval_model = self.keras_model.clone()
         eval_model.setWeights(weights)
-        eval_metrics = KerasModel.evaluateKerasModel(
+        eval_metrics = ModelUtils.getModelClass(self.config).evaluateKerasModel(
             eval_model.getModel(), self.dataset.val)
         return eval_metrics
 
     def evaluate(self):
-        eval_metrics = KerasModel.evaluateKerasModel(
+        eval_metrics = ModelUtils.getModelClass(self.config).evaluateKerasModel(
             self.keras_model.getModel(), self.dataset.val)
         return eval_metrics
 

@@ -3,7 +3,6 @@ from model.DFLv1Strategy import DFLv1Strategy
 from model.ModelUpdateMarket import ModelUpdateMarket
 from model.SerializationUtils import SerializationUtils
 from network.NetworkUtils import NetworkUtils
-from tffmodel.KerasModel import KerasModel
 from utils.PartitioningUtils import PartitioningUtils
 
 import asyncio

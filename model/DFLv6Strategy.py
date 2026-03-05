@@ -2,7 +2,6 @@ from model.AggregationUtils import AggregationUtils
 from model.IDFLStrategy import IDFLStrategy
 from model.SerializationUtils import SerializationUtils
 from network.NetworkUtils import NetworkUtils
-from tffmodel.KerasModel import KerasModel
 
 import asyncio
 import logging

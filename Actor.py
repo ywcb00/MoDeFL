@@ -8,7 +8,7 @@ from network.NetworkUtils import NetworkUtils
 from tffdataset.DatasetUtils import DatasetID, getDataset
 from tffdataset.DirectDataset import DirectDataset
 from tffdataset.FedDataset import FedDataset, PartitioningScheme
-from tffmodel.KerasModel import KerasModel
+from tffmodel.ModelUtils import ModelUtils
 
 import logging
 import tensorflow as tf
@@ -67,7 +67,7 @@ class Actor:
         def initializeModelCallback(model_config_serialized, optimizer_config_serialized):
             model, optimizer = SerializationUtils.deserializeModel(
                 model_config_serialized, optimizer_config_serialized)
-            self.keras_model = KerasModel.fromExistingModel(model, optimizer, self.config)
+            self.keras_model = ModelUtils.getModelClass(self.config).fromExistingModel(model, optimizer, self.config)
 
             self.logger.debug("Initialized the model.")
 

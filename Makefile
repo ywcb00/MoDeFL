@@ -10,6 +10,10 @@ install-dependencies:
 	@echo "Installing Poetry dependencies"
 	poetry install
 
+install-dependencies-torch:
+	@echo "Installing Poetry dependencies w/ torch"
+	poetry install --with torch
+
 build-protocolbuffers:
 	@echo "Compiling Protocol Buffers"
 	poetry run python -m grpc_tools.protoc -Inetwork/protos=./network/protobuf --python_out=./ --pyi_out=./ --grpc_python_out=./ ./network/protobuf/*.proto
