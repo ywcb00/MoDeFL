@@ -13,6 +13,9 @@ from tffmodel.ModelUtils import ModelUtils
 import logging
 import tensorflow as tf
 
+import os
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+
 # represent a device and hold the main process in DFL with all related properties and functionalities
 class Actor:
     def __init__(self, config):
