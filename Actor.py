@@ -70,7 +70,7 @@ class Actor:
         def initializeModelCallback(model_config_serialized, optimizer_config_serialized):
             model, optimizer = SerializationUtils.deserializeModel(
                 model_config_serialized, optimizer_config_serialized)
-            self.keras_model = ModelUtils.getModelClass(self.config).fromExistingModel(model, optimizer, self.config)
+            self.model = ModelUtils.getModelClass(self.config).fromExistingModel(model, optimizer, self.config)
 
             self.logger.debug("Initialized the model.")
 
@@ -78,7 +78,7 @@ class Actor:
             # deserialize and reshape the retrieved weights
             init_weights = SerializationUtils.deserializeParameters(
                 request.parameters, sparse=request.sparse)
-            self.keras_model.setWeights(init_weights)
+            self.model.setWeights(init_weights)
             self.logger.debug("Initialized the model weights.")
 
         def initializeStrategyCallback(
@@ -136,7 +136,7 @@ class Actor:
     def train(self):
         self.logger.info("Starting with the learning procedure")
 
-        self.strategy = LearningStrategy.getStrategy(self.config, self.keras_model, self.dataset)
+        self.strategy = LearningStrategy.getStrategy(self.config, self.model, self.dataset)
         self.strategy.performTraining()
 
     # run the actor

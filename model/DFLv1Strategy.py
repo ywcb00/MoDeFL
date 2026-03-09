@@ -8,8 +8,8 @@ import logging
 
 # FedAvg
 class DFLv1Strategy(IDFLStrategy):
-    def __init__(self, config, keras_model, dataset):
-        super().__init__(config, keras_model, dataset)
+    def __init__(self, config, model, dataset):
+        super().__init__(config, model, dataset)
         self.logger = logging.getLogger("model/DFLv1Strategy")
         self.logger.setLevel(config["log_level"])
 
@@ -42,20 +42,20 @@ class DFLv1Strategy(IDFLStrategy):
 
     def fitLocal(self):
         self.logger.info(f'Fitting local model for {self.config["num_local_epochs"]} local epochs.')
-        self.previous_weights = self.keras_model.getWeights()
-        fit_history = self.keras_model.fit(self.dataset)
+        self.previous_weights = self.model.getWeights()
+        fit_history = self.model.fit(self.dataset)
         train_metrics = fit_history.history
         return train_metrics
 
     def broadcast(self):
-        current_weights = self.keras_model.getWeights()
+        current_weights = self.model.getWeights()
         model_delta = current_weights - self.previous_weights
 
         asyncio.run(self.broadcastParametersToNeighbors(weights=model_delta,
             aggregation_weight=self.dataset.train.cardinality().numpy()))
 
     def aggregate(self):
-        current_model_delta = self.keras_model.getWeights() - self.previous_weights
+        current_model_delta = self.model.getWeights() - self.previous_weights
         received_model_updates_vals = self.model_update_market.get().values()
         model_deltas = [rmu["weights"] for rmu in received_model_updates_vals]
         aggregation_weights = [rmu["aggregation_weight"] for rmu in received_model_updates_vals]
@@ -63,7 +63,7 @@ class DFLv1Strategy(IDFLStrategy):
         aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
         avg_model_deltas = AggregationUtils.averageModelParameters(model_deltas, aggregation_weights)
         new_weights = self.previous_weights + avg_model_deltas
-        self.keras_model.setWeights(new_weights)
+        self.model.setWeights(new_weights)
 
     # notify the neighbors about the completion and wait until this actor can terminate safely
     def stop(self):

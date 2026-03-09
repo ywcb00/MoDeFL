@@ -22,8 +22,8 @@ class FedProxRegularizer(tf.keras.regularizers.Regularizer):
 
 # FedProx
 class DFLv4Strategy(DFLv1Strategy):
-    def __init__(self, config, keras_model, dataset):
-        super().__init__(config, keras_model, dataset)
+    def __init__(self, config, model, dataset):
+        super().__init__(config, model, dataset)
         self.logger = logging.getLogger("model/DFLv4Strategy")
         self.logger.setLevel(config["log_level"])
 
@@ -31,11 +31,12 @@ class DFLv4Strategy(DFLv1Strategy):
         # TODO: set the hyperparameter mu (regularization magnitude)
         mu = 0.1
         regularizers = list()
-        for layer in self.keras_model.getModel().layers:
+        for layer in self.model.getModel().layers:
             if(hasattr(layer, 'kernel_regularizer')):
                 regularizers.append(FedProxRegularizer(mu, layer.get_weights()[0]))
 
-        self.keras_model.addKernelRegularizers(regularizers)
+        # NOTE: support for Keras Model Type only
+        self.model.addKernelRegularizers(regularizers)
         self.logger.debug(f'Added {len(regularizers)} regularizers to the model.')
 
         train_metrics = super().fitLocal()

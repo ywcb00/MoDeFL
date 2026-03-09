@@ -27,10 +27,10 @@ class MultivariateExponentiallyWeightedMovingAverage:
 
 # Consensus-based Federated Averaging w/ Gradient Exchange
 class DFLv3Strategy(IDFLStrategy):
-    def __init__(self, config, keras_model, dataset):
-        super().__init__(config, keras_model, dataset)
-        self.model_parameters = keras_model.getWeights()
-        # shape_gradient = keras_model.computeGradient(dataset, num_local_epochs=1)
+    def __init__(self, config, model, dataset):
+        super().__init__(config, model, dataset)
+        self.model_parameters = model.getWeights()
+        # shape_gradient = model.computeGradient(dataset, num_local_epochs=1)
         shape_gradient = self.model_parameters # gradient and weights have the same shape, only used to determine shape
         # TODO: set the hyperparameter a_ma (i.e., moving average magnitude)
         self.mewma = MultivariateExponentiallyWeightedMovingAverage(
@@ -67,7 +67,7 @@ class DFLv3Strategy(IDFLStrategy):
 
     def fitLocal(self):
         self.logger.info(f'Fitting local model for {self.config["num_local_epochs"]} local epochs.')
-        fit_history = self.keras_model.fit(self.dataset)
+        fit_history = self.model.fit(self.dataset)
         train_metrics = fit_history.history
         return train_metrics
 
@@ -76,7 +76,7 @@ class DFLv3Strategy(IDFLStrategy):
             self.model_parameters, self.mewma.get()))
 
     def computeGradients(self, received_model_updates):
-        comp_grad_model = self.keras_model.clone()
+        comp_grad_model = self.model.clone()
         computed_gradients = dict()
         for addr, (mp, _) in received_model_updates.items():
             comp_grad_model.setWeights(mp)
@@ -90,7 +90,7 @@ class DFLv3Strategy(IDFLStrategy):
         alph_t = dict([(actor_addr, 1 / len(self.config["neighbors"])) for actor_addr in self.config["neighbors"]])
         mu_t = 0.005
         beta_t = dict([(actor_addr, 1 / 15) for actor_addr in self.config["neighbors"]])
-        current_weights = self.keras_model.getWeights()
+        current_weights = self.model.getWeights()
 
         received_model_updates = self.model_update_market.get()
         received_model_updates_tuples = {key: (val["weights"], val["gradient"]) for key, val in received_model_updates.items()}
@@ -99,7 +99,7 @@ class DFLv3Strategy(IDFLStrategy):
         self.model_parameters, adjusted_model_parameters = AggregationUtils.consensusbasedFedAvgWithGradExchange(
             current_weights, received_model_updates_tuples, eps_t, alph_t, mu_t, beta_t)
         self.mewma.predict(computed_gradients)
-        self.keras_model.setWeights(adjusted_model_parameters)
+        self.model.setWeights(adjusted_model_parameters)
 
     # notify the neighbors about the completion and wait until this actor can terminate safely
     def stop(self):

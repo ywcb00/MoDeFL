@@ -9,8 +9,8 @@ import logging
 
 # FedAvg w/ Gradient Compression
 class DFLv7Strategy(IDFLStrategy):
-    def __init__(self, config, keras_model, dataset):
-        super().__init__(config, keras_model, dataset)
+    def __init__(self, config, model, dataset):
+        super().__init__(config, model, dataset)
         self.logger = logging.getLogger("model/DFLv7Strategy")
         self.logger.setLevel(config["log_level"])
 
@@ -45,9 +45,9 @@ class DFLv7Strategy(IDFLStrategy):
         self.logger.info(f'Fitting local model for {self.config["num_local_epochs"]} local epochs.')
 
         train_metrics = None
-        self.previous_weights = self.keras_model.getWeights()
+        self.previous_weights = self.model.getWeights()
 
-        self.computed_gradient, train_metrics = self.keras_model.fitGradient(self.dataset)
+        self.computed_gradient, train_metrics = self.model.fitGradient(self.dataset)
 
         return train_metrics
 
@@ -64,7 +64,7 @@ class DFLv7Strategy(IDFLStrategy):
         aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
         avg_model_gradient = AggregationUtils.averageModelParameters(model_gradients, aggregation_weights)
         new_weights = self.previous_weights - (avg_model_gradient * self.config["lr_global"])
-        self.keras_model.setWeights(new_weights)
+        self.model.setWeights(new_weights)
 
     # notify the neighbors about the completion and wait until this actor can terminate safely
     def stop(self):

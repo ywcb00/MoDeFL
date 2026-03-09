@@ -21,23 +21,23 @@ class LearningType(Enum):
 
 class LearningStrategy:
     @classmethod
-    def getStrategy(self_class, config, keras_model, dataset):
+    def getStrategy(self_class, config, model, dataset):
         match config["learning_type"]:
             case LearningType.DFLv1:
-                return DFLv1Strategy(config, keras_model, dataset)
+                return DFLv1Strategy(config, model, dataset)
             case LearningType.DFLv2:
-                return DFLv2Strategy(config, keras_model, dataset)
+                return DFLv2Strategy(config, model, dataset)
             case LearningType.DFLv3:
-                return DFLv3Strategy(config, keras_model, dataset)
+                return DFLv3Strategy(config, model, dataset)
             case LearningType.DFLv4:
-                return DFLv4Strategy(config, keras_model, dataset)
+                return DFLv4Strategy(config, model, dataset)
             case LearningType.DFLv5:
-                return DFLv5Strategy(config, keras_model, dataset)
+                return DFLv5Strategy(config, model, dataset)
             case LearningType.DFLv6:
-                return DFLv6Strategy(config, keras_model, dataset)
+                return DFLv6Strategy(config, model, dataset)
             case LearningType.DFLv7:
-                return DFLv7Strategy(config, keras_model, dataset)
+                return DFLv7Strategy(config, model, dataset)
             case LearningType.DFLv8:
-                return DFLv8Strategy(config, keras_model, dataset)
+                return DFLv8Strategy(config, model, dataset)
             case _:
                 raise NotImplementedError

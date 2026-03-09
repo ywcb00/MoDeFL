@@ -14,9 +14,9 @@ import grpc
 import numpy as np
 
 class IDFLStrategy(ABC):
-    def __init__(self, config, keras_model, dataset):
+    def __init__(self, config, model, dataset):
         self.config = config
-        self.keras_model = keras_model
+        self.model = model
         self.model_update_market = ModelUpdateMarket(self.config)
         self.dataset = dataset
 
@@ -186,7 +186,7 @@ class IDFLStrategy(ABC):
         return eval_metrics
 
     def evaluateNeighbors(self):
-        weights = self.keras_model.getWeights()
+        weights = self.model.getWeights()
 
         eval_metrics = asyncio.run(self.evaluateWeightsAllNeighbors(weights))
         eval_metrics.append(self.evaluate())
@@ -195,15 +195,13 @@ class IDFLStrategy(ABC):
         return eval_avg
 
     def evaluateWeights(self, weights):
-        eval_model = self.keras_model.clone()
+        eval_model = self.model.clone()
         eval_model.setWeights(weights)
-        eval_metrics = ModelUtils.getModelClass(self.config).evaluateKerasModel(
-            eval_model.getModel(), self.dataset.val)
+        eval_metrics = eval_model.evaluate(self.dataset.val)
         return eval_metrics
 
     def evaluate(self):
-        eval_metrics = ModelUtils.getModelClass(self.config).evaluateKerasModel(
-            self.keras_model.getModel(), self.dataset.val)
+        eval_metrics = self.model.evaluate(self.dataset.val)
         return eval_metrics
 
     # register the termination permission of a neighboring actor

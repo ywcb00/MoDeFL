@@ -8,8 +8,8 @@ import logging
 
 # Consensus-based Federated Averaging
 class DFLv2Strategy(IDFLStrategy):
-    def __init__(self, config, keras_model, dataset):
-        super().__init__(config, keras_model, dataset)
+    def __init__(self, config, model, dataset):
+        super().__init__(config, model, dataset)
         self.logger = logging.getLogger("model/DFLv2Strategy")
         self.logger.setLevel(config["log_level"])
 
@@ -42,24 +42,24 @@ class DFLv2Strategy(IDFLStrategy):
 
     def fitLocal(self):
         self.logger.info(f'Fitting local model for {self.config["num_local_epochs"]} local epochs.')
-        fit_history = self.keras_model.fit(self.dataset)
+        fit_history = self.model.fit(self.dataset)
         train_metrics = fit_history.history
         return train_metrics
 
     def broadcast(self):
-        weights = self.keras_model.getWeights()
+        weights = self.model.getWeights()
         asyncio.run(self.broadcastParametersToNeighbors(weights=weights))
 
     def aggregate(self):
         # TODO: set the hyperparameters eps_t and alph_t (i.e., consensus step-size and mixing weights)
         eps_t = 1 / len(self.config["neighbors"])
         alph_t = dict([(actor_addr, 1) for actor_addr in self.config["neighbors"]])
-        current_weights = self.keras_model.getWeights()
+        current_weights = self.model.getWeights()
         received_model_updates = self.model_update_market.get()
         received_model_weights = {key: val["weights"] for key, val in received_model_updates.items()}
         new_weights = AggregationUtils.consensusbasedFedAvg(
             current_weights, received_model_weights, eps_t, alph_t)
-        self.keras_model.setWeights(new_weights)
+        self.model.setWeights(new_weights)
 
     # notify the neighbors about the completion and wait until this actor can terminate safely
     def stop(self):

@@ -109,7 +109,7 @@ class Initiator:
 
     # perform the initialization phase
     async def initialize(self, addresses, adj_mat):
-        model = ModelUtils.getModelClass(self.config).createKerasModelElementSpec(
+        model = ModelUtils.getModelClass(self.config).createModelElementSpec(
             getDatasetElementSpec(self.config), self.config)
         _, optimizer = getFedOptimizers(self.config)
         model_config_serialized, optimizer_config_serialized = SerializationUtils.serializeModel(

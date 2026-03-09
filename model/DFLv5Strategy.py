@@ -9,8 +9,8 @@ import numpy as np
 
 # FedNova
 class DFLv5Strategy(IDFLStrategy):
-    def __init__(self, config, keras_model, dataset):
-        super().__init__(config, keras_model, dataset)
+    def __init__(self, config, model, dataset):
+        super().__init__(config, model, dataset)
         self.logger = logging.getLogger("model/DFLv5Strategy")
         self.logger.setLevel(config["log_level"])
 
@@ -44,8 +44,8 @@ class DFLv5Strategy(IDFLStrategy):
     def fitLocal(self):
         self.logger.info(f'Fitting local model for {self.config["num_local_epochs"]} local epochs.')
 
-        self.previous_weights = self.keras_model.getWeights()
-        self.computed_gradient, train_metrics = self.keras_model.fitGradient(self.dataset)
+        self.previous_weights = self.model.getWeights()
+        self.computed_gradient, train_metrics = self.model.fitGradient(self.dataset)
 
         return train_metrics
 
@@ -66,7 +66,7 @@ class DFLv5Strategy(IDFLStrategy):
 
         new_weights = AggregationUtils.fedNova(self.previous_weights, model_gradients,
             aggregation_weights, tau_eff, self.config["lr_global"], a_values)
-        self.keras_model.setWeights(new_weights)
+        self.model.setWeights(new_weights)
 
     # notify the neighbors about the completion and wait until this actor can terminate safely
     def stop(self):

@@ -11,10 +11,10 @@ import logging
 GLOBAL_PARTITION_FLAG = -1
 
 class DFLv8Strategy(DFLv1Strategy):
-    def __init__(self, config, keras_model, dataset):
-        super().__init__(config, keras_model, dataset)
+    def __init__(self, config, model, dataset):
+        super().__init__(config, model, dataset)
         self.global_weight_partition = PartitioningUtils.getParameterPartition(
-            keras_model.getWeights(), config["actor_idx"], self.config)
+            model.getWeights(), config["actor_idx"], self.config)
         self.model_partition_market = ModelUpdateMarket(self.config)
         self.logger = logging.getLogger("model/DFLv8Strategy")
         self.logger.setLevel(config["log_level"])
@@ -50,7 +50,7 @@ class DFLv8Strategy(DFLv1Strategy):
         self.model_update_service.startServer(callbacks)
 
     def broadcast(self):
-        current_weights = self.keras_model.getWeights()
+        current_weights = self.model.getWeights()
         model_delta = current_weights - self.previous_weights
 
         model_delta_partitioned = PartitioningUtils.partitionModelParameters(model_delta, self.config)
@@ -60,7 +60,7 @@ class DFLv8Strategy(DFLv1Strategy):
 
     def aggregateWeightPartitions(self):
         current_model_delta = PartitioningUtils.getParameterPartition(
-            (self.keras_model.getWeights() - self.previous_weights),
+            (self.model.getWeights() - self.previous_weights),
             self.config["actor_idx"], self.config)
         received_model_update_vals = self.model_update_market.get().values()
         model_deltas = [rmu["weights"] for rmu in received_model_update_vals]
@@ -82,9 +82,9 @@ class DFLv8Strategy(DFLv1Strategy):
         partition_dict = {actor_idx_lookup_dict[addr]: elem["weights"] for addr, elem in received_model_partitions.items()}
         partition_dict[self.config["actor_idx"]] = self.global_weight_partition
         new_weights = PartitioningUtils.joinParameterPartitions(
-            partition_dict, self.keras_model.getWeights(), self.config)
+            partition_dict, self.model.getWeights(), self.config)
 
-        self.keras_model.setWeights(new_weights)
+        self.model.setWeights(new_weights)
 
     def aggregate(self):
         self.aggregateWeightPartitions()
