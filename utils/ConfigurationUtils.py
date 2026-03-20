@@ -2,7 +2,7 @@ from model.LearningStrategy import LearningType
 from model.ModelUpdateMarket import SynchronizationStrategy
 from network.PartialDeviceParticipation import PartialDeviceParticipationStrategy
 from tffdataset.DatasetUtils import DatasetID
-from tffdataset.FedDataset import PartitioningScheme
+from tffdataset.IFedDataset import PartitioningScheme
 from tffmodel.ModelUtils import ModelType
 from network.Compression import CompressionType
 from network.NetworkUtils import NetworkServiceType

@@ -53,7 +53,7 @@ class DFLv7Strategy(IDFLStrategy):
 
     def broadcast(self):
         asyncio.run(self.broadcastParametersToNeighbors(gradient=self.computed_gradient,
-            aggregation_weight=self.dataset.train.cardinality().numpy()))
+            aggregation_weight=self.dataset.trainSize()))
 
     def aggregate(self):
         received_model_update_vals = self.model_update_market.get().values()
@@ -61,7 +61,7 @@ class DFLv7Strategy(IDFLStrategy):
         aggregation_weights = [rmu["aggregation_weight"] for rmu in received_model_update_vals]
         model_gradients = [Compression.compressDecompress(
             self.computed_gradient, self.config), *model_gradients]
-        aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
+        aggregation_weights = [self.dataset.trainSize(), *aggregation_weights]
         avg_model_gradient = AggregationUtils.averageModelParameters(model_gradients, aggregation_weights)
         new_weights = self.previous_weights - (avg_model_gradient * self.config["lr_global"])
         self.model.setWeights(new_weights)

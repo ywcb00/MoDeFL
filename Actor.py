@@ -6,9 +6,9 @@ from network.PartialDeviceParticipation import PartialDeviceParticipationStrateg
 from model.SerializationUtils import SerializationUtils
 from network.NetworkUtils import NetworkUtils
 from tffdataset.DatasetUtils import DatasetID, getDataset
-from tffdataset.DirectDataset import DirectDataset
-from tffdataset.FedDataset import FedDataset, PartitioningScheme
-from tffmodel.ModelUtils import ModelUtils
+from tffdataset.DirectTensorFlowDataset import DirectTensorFlowDataset
+from tffdataset.IFedDataset import IFedDataset, PartitioningScheme
+from tffmodel.ModelUtils import ModelType, ModelUtils
 
 import logging
 import tensorflow as tf
@@ -54,22 +54,25 @@ class Actor:
 
             # TODO: distinguish between loading an entire dataset and partitioning it
             #       or directly loading a single partition
-            self.fed_dataset = FedDataset(self.config)
+            self.fed_dataset = IFedDataset.getFedDataset(self.config)
             self.fed_dataset.construct(self.dataset, seed=dataset_seed)
             self.fed_dataset.batch()
 
-            self.dataset = DirectDataset(self.dataset.batch_size, self.dataset.element_spec,
-                self.fed_dataset.train[self.config["partition_index"]],
-                self.fed_dataset.val[self.config["partition_index"]],
-                self.fed_dataset.test[self.config["partition_index"]],
-                self.config)
+            self.dataset = self.fed_dataset.getPartition(self.config["partition_index"])
+
+            # self.dataset = DirectTensorFlowDataset(self.dataset.batch_size, self.dataset.element_spec,
+            #     self.fed_dataset.train[self.config["partition_index"]],
+            #     self.fed_dataset.val[self.config["partition_index"]],
+            #     self.fed_dataset.test[self.config["partition_index"]],
+            #     self.config)
 
             self.logger.debug(f'Using partition {self.config["partition_index"]} of '
                 + f'dataset {self.config["dataset_id"].name}.')
 
-        def initializeModelCallback(model_config_serialized, optimizer_config_serialized):
+        def initializeModelCallback(modeltype_id, model_config_serialized, optimizer_config_serialized):
+            self.config["modeltype_id"] = ModelType(modeltype_id)
             model, optimizer = SerializationUtils.deserializeModel(
-                model_config_serialized, optimizer_config_serialized)
+                model_config_serialized, optimizer_config_serialized, self.config)
             self.model = ModelUtils.getModelClass(self.config).fromExistingModel(model, optimizer, self.config)
 
             self.logger.debug("Initialized the model.")

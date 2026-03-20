@@ -24,23 +24,36 @@ initiate:
 	poetry run python main.py --initiate \
 		--config=$(CONFIG_FILE) \
 		--addr_file=$(ADDR_FILE) \
-		--adj_file=$(ADJ_FILE)
+		--adj_file=$(ADJ_FILE) \
+		$(ADDITIONAL_ARGUMENTS)
 
 # call like `make act PORT=<port> [CONFIG_FILE=<config_file>]`
 act:
 	@echo "Starting the Actor"
 	poetry run python main.py --act \
 		--config=$(CONFIG_FILE) \
-		--port=$(PORT)
-	echo "After actor"
+		--port=$(PORT) \
+		$(ADDITIONAL_ARGUMENTS)
 
 sanitycheck:
 	@make act PORT=50506 \
 		CONFIG_FILE="./resources/config/config_sanitycheck.json" > /dev/null &
 	@sleep 3 && make initiate \
 		ADDR_FILE="./resources/addr_sanitycheck.txt" \
-		ADJ_FILE="./resources/adj_sanitycheck.txt" > /dev/null \
-		CONFIG_FILE="./resources/config/config_sanitycheck.json" &
+		ADJ_FILE="./resources/adj_sanitycheck.txt" \
+		CONFIG_FILE="./resources/config/config_sanitycheck.json" > /dev/null &
+	@make act PORT=50505 \
+		CONFIG_FILE="./resources/config/config_sanitycheck.json" > /dev/null
+	@echo "Sanity seems fine."
+
+sanitycheck-torch:
+	@make act PORT=50506 \
+		CONFIG_FILE="./resources/config/config_sanitycheck.json" > /dev/null &
+	@sleep 3 && make initiate \
+		ADDR_FILE="./resources/addr_sanitycheck.txt" \
+		ADJ_FILE="./resources/adj_sanitycheck.txt" \
+		CONFIG_FILE="./resources/config/config_sanitycheck.json" \
+		ADDITIONAL_ARGUMENTS="--dataset_id=4 --modeltype_id=2 --partitioning_scheme=4" > /dev/null &
 	@make act PORT=50505 \
 		CONFIG_FILE="./resources/config/config_sanitycheck.json" > /dev/null
 	@echo "Sanity seems fine."

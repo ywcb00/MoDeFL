@@ -43,7 +43,7 @@ class DFLv2Strategy(IDFLStrategy):
     def fitLocal(self):
         self.logger.info(f'Fitting local model for {self.config["num_local_epochs"]} local epochs.')
         fit_history = self.model.fit(self.dataset)
-        train_metrics = fit_history.history
+        train_metrics = fit_history
         return train_metrics
 
     def broadcast(self):

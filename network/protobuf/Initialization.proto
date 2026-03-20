@@ -31,8 +31,9 @@ message Partition {
 };
 
 message Model {
-    bytes model_config = 1; // serialized model configuration
-    bytes optimizer_config = 2; // serialized optimizer configuration
+    int32 modeltype_id = 1; // enum id
+    bytes model_config = 2; // serialized model configuration
+    bytes optimizer_config = 3; // serialized optimizer configuration
 };
 
 message Strategy {

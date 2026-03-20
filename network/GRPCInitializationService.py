@@ -26,7 +26,8 @@ class Servicer(Initialization_pb2_grpc.InitializeServicer):
 
     # obtain the serialized model configuration and initialize the ML model
     def InitModel(self, request, context):
-        self.callbacks["InitModel"](request.model_config, request.optimizer_config)
+        self.callbacks["InitModel"](request.modeltype_id,
+            request.model_config, request.optimizer_config)
         return ModelUpdate_pb2.Ack()
 
     # initialize the weights of the model

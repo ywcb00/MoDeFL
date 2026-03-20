@@ -44,7 +44,7 @@ class DFLv1Strategy(IDFLStrategy):
         self.logger.info(f'Fitting local model for {self.config["num_local_epochs"]} local epochs.')
         self.previous_weights = self.model.getWeights()
         fit_history = self.model.fit(self.dataset)
-        train_metrics = fit_history.history
+        train_metrics = fit_history
         return train_metrics
 
     def broadcast(self):
@@ -52,7 +52,7 @@ class DFLv1Strategy(IDFLStrategy):
         model_delta = current_weights - self.previous_weights
 
         asyncio.run(self.broadcastParametersToNeighbors(weights=model_delta,
-            aggregation_weight=self.dataset.train.cardinality().numpy()))
+            aggregation_weight=self.dataset.trainSize()))
 
     def aggregate(self):
         current_model_delta = self.model.getWeights() - self.previous_weights
@@ -60,7 +60,7 @@ class DFLv1Strategy(IDFLStrategy):
         model_deltas = [rmu["weights"] for rmu in received_model_updates_vals]
         aggregation_weights = [rmu["aggregation_weight"] for rmu in received_model_updates_vals]
         model_deltas = [current_model_delta, *model_deltas]
-        aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
+        aggregation_weights = [self.dataset.trainSize(), *aggregation_weights]
         avg_model_deltas = AggregationUtils.averageModelParameters(model_deltas, aggregation_weights)
         new_weights = self.previous_weights + avg_model_deltas
         self.model.setWeights(new_weights)

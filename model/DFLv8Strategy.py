@@ -56,7 +56,7 @@ class DFLv8Strategy(DFLv1Strategy):
         model_delta_partitioned = PartitioningUtils.partitionModelParameters(model_delta, self.config)
 
         asyncio.run(self.broadcastWeightPartitions(model_delta_partitioned,
-            self.dataset.train.cardinality().numpy()))
+            self.dataset.trainSize()))
 
     def aggregateWeightPartitions(self):
         current_model_delta = PartitioningUtils.getParameterPartition(
@@ -66,7 +66,7 @@ class DFLv8Strategy(DFLv1Strategy):
         model_deltas = [rmu["weights"] for rmu in received_model_update_vals]
         aggregation_weights = [rmu["aggregation_weight"] for rmu in received_model_update_vals]
         model_deltas = [current_model_delta, *model_deltas]
-        aggregation_weights = [self.dataset.train.cardinality().numpy(), *aggregation_weights]
+        aggregation_weights = [self.dataset.trainSize(), *aggregation_weights]
         avg_model_deltas = AggregationUtils.averageModelParameters(model_deltas, aggregation_weights)
         self.global_weight_partition = self.global_weight_partition + avg_model_deltas
 

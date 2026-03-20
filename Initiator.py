@@ -6,7 +6,7 @@ import network.protos.Initialization_pb2 as Initialization_pb2
 import network.protos.Initialization_pb2_grpc as Initialization_pb2_grpc
 import network.protos.ModelUpdate_pb2 as ModelUpdate_pb2
 from tffdataset.DatasetUtils import getDatasetElementSpec
-from tffmodel.ModelBuilderUtils import getFedOptimizers
+from tffmodel.ModelBuilderUtils import getOptimizer
 from tffmodel.ModelUtils import ModelUtils
 from tffmodel.types.HeterogeneousDenseArray import HeterogeneousDenseArray
 
@@ -55,6 +55,7 @@ class Initiator:
                     partition_dirichlet_alpha=self.config["partitioning_alpha"])))
 
             await stub.InitModel(Initialization_pb2.Model(
+                modeltype_id=self.config["modeltype_id"].value,
                 model_config=model_config_serialized, optimizer_config=optimizer_config_serialized))
 
             await stub.InitModelParameters(ModelUpdate_pb2.ModelParameters(
@@ -109,13 +110,11 @@ class Initiator:
 
     # perform the initialization phase
     async def initialize(self, addresses, adj_mat):
-        model = ModelUtils.getModelClass(self.config).createModelElementSpec(
-            getDatasetElementSpec(self.config), self.config)
-        _, optimizer = getFedOptimizers(self.config)
-        model_config_serialized, optimizer_config_serialized = SerializationUtils.serializeModel(
-            model, optimizer)
+        model = ModelUtils.getModelObject(self.config)
+        model.initModelElementSpec(getDatasetElementSpec(self.config))
+        model_config_serialized, optimizer_config_serialized = model.serialize()
 
-        init_weights = HeterogeneousDenseArray(model.get_weights())
+        init_weights = model.getWeights()
         init_weights_serialized = SerializationUtils.serializeParameters(init_weights)
 
         tasks = []
